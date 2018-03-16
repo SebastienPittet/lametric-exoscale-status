@@ -82,4 +82,4 @@ class Setup(object):
             sys.exit(1)
         else:
             # everything is fine
-            print('LaMetric updated with exoscale status.')
+            print('LaMetric updated.')

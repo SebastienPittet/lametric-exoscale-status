@@ -60,6 +60,7 @@ except requests.exceptions.RequestException as e:
     sys.exit(1)
 
 lametric = lametric.Setup()
+lametric.addTextFrame(icon['app-icon'], 'Exoscale')
 
 # Parse exoscale status
 for service in exoscaleStatus['status']:

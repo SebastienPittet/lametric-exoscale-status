@@ -1,6 +1,6 @@
 # lametric-exoscale-status
-Use LaMetric Time to display the status of all services provided by @exoscale, a public cloud provider.
-This code is largely inspired from the work of _@baracudaz_ .
+Use LaMetric Time to display the status of all services provided by [exoscale, a public cloud provider](https://www.exoscale.com).
+This code is largely inspired from the work of [@baracudaz](https://github.com/baracudaz/netatmo-lametric-proxy).
 
 For users interested in exoscale status, you only need to install the app [**exoscale statuts**](https://apps.lametric.com/apps/exoscale_status/5807) on your devivce.
 
@@ -13,10 +13,13 @@ In case of interest, you can duplicate this by following these steps:
 5. Decide if you need a public available app (listed in the store) or a private one.
 
 Once the application is created, on your server, execute:
+```
+git clone <this repo>
+cd lametric-exoscale-status
+virtualenv venv
+pip install -r requirements.txt
+```
 
-1. git clone <this repo>
-2. cd lametric-exoscale-status
-3. virtualenv venv
-4. pip install -r requirements.txt
-5. Update the *config.ini* and save your ACCESS_TOKEN and PUSH_URL
-6. schedule the execution of this code
+Finally :
+1. Update the *config.ini* and save your ACCESS_TOKEN and PUSH_URL
+2. schedule the execution of this code

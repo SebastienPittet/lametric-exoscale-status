@@ -88,5 +88,18 @@ else:
                               maintenance['title'] + ' : ' +
                               maintenance['description'])
 
+# If any, display a list of incidents
+if len(exoscaleStatus['incidents']) < 1:
+    lametric.addTextFrame(icon['smile'],
+                          'No incident on exoscale.')
+else:
+    lametric.addTextFrame(icon['redcross'],
+                          'Incidents hurting exoscale.')
+    for incident in iter(exoscaleStatus['incidents']):
+        lametric.addTextFrame(icon['tool'],
+                              incident['date'][:10] + ': ' +
+                              incident['title'] + ' : ' +
+                              incident['description'])
+
 # Finally, push to LaMetric
 lametric.push(app_id, access_token)

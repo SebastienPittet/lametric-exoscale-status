@@ -36,7 +36,10 @@ icon = {
     'app-icon': 'a17776',
     'up': 'i120',
     'down': 'i124',
-    'stable': 'a13526'
+    'stable': 'a13526',
+    'tool': 'i93',
+    'smile': 'i4907',
+    'redcross': 'i654'
     }
 
 # Get exoscale status from public API (json format)
@@ -71,6 +74,19 @@ for service in exoscaleStatus['status']:
         lametric.addTextFrame(icon['up'], service)
     else:
         lametric.addTextFrame(icon['down'], service)
+
+# If any, display a list of upcoming maintenances
+if len(exoscaleStatus['upcoming_maintenances']) < 1:
+    lametric.addTextFrame(icon['tool'],
+                          'No maintenance planned on exoscale.')
+else:
+    lametric.addTextFrame(icon['app-icon'],
+                          'Upcoming maintenances on exoscale')
+    for maintenance in iter(exoscaleStatus['upcoming_maintenances']):
+        lametric.addTextFrame(icon['tool'],
+                              maintenance['date'][:10] + ': ' +
+                              maintenance['title'] + ' : ' +
+                              maintenance['description'])
 
 # Finally, push to LaMetric
 lametric.push(app_id, access_token)

@@ -13,6 +13,17 @@ from library import lametric
 
 _CONFIG_FILE = 'config.ini'
 
+# Icons definition
+icon = {
+    'app-icon': 'a17776',
+    'up': 'i120',
+    'down': 'i124',
+    'stable': 'a13526',
+    'tool': 'i93',
+    'smile': 'i4907',
+    'redcross': 'i654'
+    }
+
 # Load the configuration from config.ini file
 try:
     # Get the path of configuration file
@@ -30,17 +41,6 @@ try:
 except:
     print('Cannot read configuration file. Exit.')
     sys.exit(1)
-
-# Icons definition
-icon = {
-    'app-icon': 'a17776',
-    'up': 'i120',
-    'down': 'i124',
-    'stable': 'a13526',
-    'tool': 'i93',
-    'smile': 'i4907',
-    'redcross': 'i654'
-    }
 
 # Get exoscale status from public API (json format)
 try:
@@ -80,7 +80,7 @@ if len(exoscaleStatus['upcoming_maintenances']) < 1:
     lametric.addTextFrame(icon['tool'],
                           'No maintenance planned on exoscale.')
 else:
-    lametric.addTextFrame(icon['app-icon'],
+    lametric.addTextFrame(icon['tool'],
                           'Upcoming maintenances on exoscale')
     for maintenance in iter(exoscaleStatus['upcoming_maintenances']):
         lametric.addTextFrame(icon['tool'],

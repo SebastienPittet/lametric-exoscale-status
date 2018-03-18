@@ -96,7 +96,7 @@ else:
     lametric.addTextFrame(icon['redcross'],
                           'Incidents hurting exoscale.')
     for incident in iter(exoscaleStatus['incidents']):
-        lametric.addTextFrame(icon['tool'],
+        lametric.addTextFrame(icon['redcross'],
                               incident['date'][:10] + ': ' +
                               incident['title'] + ' : ' +
                               incident['description'])

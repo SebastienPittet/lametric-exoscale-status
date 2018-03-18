@@ -2,9 +2,9 @@
 Use LaMetric Time to display the status of all services provided by [exoscale, a public cloud provider](https://www.exoscale.com).
 This code is largely inspired from the work of [@baracudaz](https://github.com/baracudaz/netatmo-lametric-proxy).
 
-For users interested in exoscale status, you only need to install the app [**exoscale statuts**](https://apps.lametric.com/apps/exoscale_status/5807) on your devivce.
+For users interested in exoscale status, you only need to install the app [**exoscale statuts**](https://apps.lametric.com/apps/exoscale_status/5807) on your device. It just works!
 
-In case of interest, you can duplicate this by following these steps:
+If you are a developer, you can duplicate this by following these steps:
 
 1. Create your own app at [developer.lametric.com](https://developer.lametric.com/)
 2. Type : *Indicator App*

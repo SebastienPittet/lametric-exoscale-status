@@ -76,12 +76,13 @@ for service in exoscaleStatus['status']:
         lametric.addTextFrame(icon['down'], service)
 
 # If any, display a list of upcoming maintenances
-if len(exoscaleStatus['upcoming_maintenances']) < 1:
+nb_maintenance = len(exoscaleStatus['upcoming_maintenances'])
+if nb_maintenance < 1:
     lametric.addTextFrame(icon['tool'],
                           'No maintenance planned on exoscale.')
 else:
     lametric.addTextFrame(icon['app-icon'],
-                          'Upcoming maintenances on exoscale')
+                          'Upcoming maintenances on exoscale: ' + str(nb_maintenance))
     for maintenance in iter(exoscaleStatus['upcoming_maintenances']):
         lametric.addTextFrame(icon['tool'],
                               maintenance['date'][:10] + ': ' +

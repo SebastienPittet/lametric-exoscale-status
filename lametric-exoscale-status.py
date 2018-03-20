@@ -81,7 +81,7 @@ if nb_maintenance < 1:
     lametric.addTextFrame(icon['tool'],
                           'No maintenance planned on exoscale.')
 else:
-    lametric.addTextFrame(icon['app-icon'],
+    lametric.addTextFrame(icon['tool'],
                           'Upcoming maintenances on exoscale: '
                           + str(nb_maintenance))
 

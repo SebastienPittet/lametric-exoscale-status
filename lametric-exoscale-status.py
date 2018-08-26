@@ -72,6 +72,8 @@ for service in exoscaleStatus['status']:
     # Generate a frame per service
     if exoscaleStatus['status'][service]['state'] == 'operational':
         lametric.addTextFrame(icon['up'], service)
+    elif exoscaleStatus['status'][service]['state'] == 'degraded_performance':
+        lametric.addTextFrame(icon['stable'], service)
     else:
         lametric.addTextFrame(icon['down'], service)
 

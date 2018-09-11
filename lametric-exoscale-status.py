@@ -5,6 +5,7 @@
 # Author : Sebastien Pittet, https://sebastien.pittet.org
 #          Inspired from @baracudaz / netatmo-lametric-proxy
 
+import logging
 import requests
 import sys
 import os
@@ -19,6 +20,7 @@ icon = {
     'up': 'i120',
     'down': 'i124',
     'stable': 'a13526',
+    'fire': '2715',
     'tool': 'i93',
     'smile': 'i4907',
     'redcross': 'i654'
@@ -38,8 +40,17 @@ try:
     lametric_push_url = config.get('lametric', 'push_url')
     app_id = config.get('lametric', 'app_id')
     access_token = config.get('lametric', 'access_token')
+
+    # Configure logging
+    loglevel = config.get('general','loglevel')
+    logfile = config.get('general','logfile')
+    numeric_level = getattr(logging, loglevel.upper(), None)
+    logging.basicConfig(filename=logfile,
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        level=numeric_level)
+
 except:
-    print('Cannot read configuration file. Exit.')
+    logging.error('Cannot read configuration file. Exit.')
     sys.exit(1)
 
 # Get exoscale status from public API (json format)
@@ -47,19 +58,19 @@ try:
     exoscaleStatus = requests.get(exoscale_status_api).json()
 
 except requests.exceptions.Timeout:
-    print('Exit on a timeout. Cannot get exoscale status.')
+    logging.critical('Exit on a timeout. Cannot get exoscale status.')
     sys.exit(1)
 
 except requests.exceptions.ConnectionError:
-    print('Connection Error. Is your DNS well configured?')
+    logging.critical('Connection Error. Is your DNS well configured?')
     sys.exit(1)
 
 except requests.exceptions.HTTPError:
-    print('Invalid HTTP response from exoscale.')
+    logging.critical('Invalid HTTP response from exoscale.')
     sys.exit(1)
 
 except requests.exceptions.RequestException as e:
-    print(e)
+    logging.critical(e)
     sys.exit(1)
 
 lametric = lametric.Setup()
@@ -67,13 +78,14 @@ lametric.addTextFrame(icon['app-icon'], 'Exoscale')
 
 # Parse exoscale status
 for service in exoscaleStatus['status']:
-    # print(service, ':', exoscaleStatus['status'][service]['state'])
+    status = service +  ' is ' +  exoscaleStatus['status'][service]['state']
+    logging.info(status)
 
     # Generate a frame per service
     if exoscaleStatus['status'][service]['state'] == 'operational':
         lametric.addTextFrame(icon['up'], service)
     elif exoscaleStatus['status'][service]['state'] == 'degraded_performance':
-        lametric.addTextFrame(icon['stable'], service)
+        lametric.addTextFrame(icon['fire'], service)
     else:
         lametric.addTextFrame(icon['down'], service)
 
@@ -94,4 +106,9 @@ else:
                               maintenance['description'])
 
 # Finally, push to LaMetric
-lametric.push(app_id, access_token)
+try:
+    lametric.push(app_id, access_token)
+    logging.info('Lametric updated with exoscale status.')
+
+except:
+    logging.error('Lametric is NOT up to date!')

@@ -79,18 +79,22 @@ lametric.addTextFrame(icon['app-icon'], 'Exoscale')
 # Parse exoscale status
 for service in exoscaleStatus['status']:
     status = service +  ' is ' +  exoscaleStatus['status'][service]['state']
-    logging.info(status)
+    logging.debug(status)
 
     # Generate a frame per service
     if exoscaleStatus['status'][service]['state'] == 'operational':
         lametric.addTextFrame(icon['up'], service)
     elif exoscaleStatus['status'][service]['state'] == 'degraded_performance':
         lametric.addTextFrame(icon['fire'], service)
+    elif exoscaleStatus['status'][service]['state'] == 'partial_outage':
+        lametric.addTextFrame(icon['fire'], service)
     else:
         lametric.addTextFrame(icon['down'], service)
 
 # If any, display a list of upcoming maintenances
 nb_maintenance = len(exoscaleStatus['upcoming_maintenances'])
+logging.debug('nb_maintenance: ' + str(nb_maintenance))
+
 if nb_maintenance < 1:
     lametric.addTextFrame(icon['tool'],
                           'No maintenance planned on exoscale.')
@@ -100,6 +104,7 @@ else:
                           + str(nb_maintenance))
 
     for maintenance in iter(exoscaleStatus['upcoming_maintenances']):
+        logging.debug(maintenance['description'])
         lametric.addTextFrame(icon['tool'],
                               maintenance['date'][:10] + ': ' +
                               maintenance['title'] + ' : ' +
@@ -108,7 +113,8 @@ else:
 # Finally, push to LaMetric
 try:
     lametric.push(app_id, access_token)
-    logging.info('Lametric updated with exoscale status.')
+    logging.info('Lametric updated with exoscale status and %s maintenance(s).',
+                  nb_maintenance)
 
 except:
     logging.error('Lametric is NOT up to date!')

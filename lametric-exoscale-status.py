@@ -78,7 +78,7 @@ lametric.addTextFrame(icon['app-icon'], 'Exoscale')
 
 # Parse exoscale status
 for service in exoscaleStatus['status']:
-    status = service +  ' is ' +  exoscaleStatus['status'][service]['state']
+    status = service +  ' is ' + exoscaleStatus['status'][service]['state']
     logging.debug(status)
 
     # Generate a frame per service

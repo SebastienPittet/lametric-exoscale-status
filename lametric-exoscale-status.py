@@ -88,6 +88,8 @@ for service in exoscaleStatus['status']:
         lametric.addTextFrame(icon['fire'], service)
     elif exoscaleStatus['status'][service]['state'] == 'partial_outage':
         lametric.addTextFrame(icon['fire'], service)
+    elif exoscaleStatus['status'][service]['state'] == 'major_outage':
+        lametric.addTextFrame(icon['down'], service)
     else:
         lametric.addTextFrame(icon['down'], service)
 
@@ -113,7 +115,7 @@ else:
 # Finally, push to LaMetric
 try:
     lametric.push(app_id, access_token)
-    logging.info('Lametric updated with exoscale status and %s maintenance(s).',
+    logging.info('Lametric updated with status and %s maintenance(s).',
                   nb_maintenance)
 
 except:

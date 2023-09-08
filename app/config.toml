@@ -5,12 +5,6 @@ status_url =  "https://statuspal.eu/api/v2/status_pages/exoscalestatus/summary"
 # status_url_prod = "https://statuspal.eu/api/v2/status_pages/exoscalestatus/summary"
 
 
-[general]
-# Set the mininum logging level (none, debug, info, warning, error and critical)
-loglevel = "info"
-logfile = "lametric.log"
-
-
 [lametric-app]
 name = "Exoscale"
 logo = "17776"
@@ -39,6 +33,7 @@ no-status = "625"
 
 # maintenance
 tool = "93"
+
 
 [lametric-country]
 # Country flags

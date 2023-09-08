@@ -1,0 +1,48 @@
+[exoscale]
+status_url =  "https://statuspal.eu/api/v2/status_pages/exoscalestatus/summary"
+
+# status_url_testing = "https://statuspal.eu/api/v2/status_pages/exoscalestatustesting/summary"
+# status_url_prod = "https://statuspal.eu/api/v2/status_pages/exoscalestatus/summary"
+
+
+[general]
+# Set the mininum logging level (none, debug, info, warning, error and critical)
+loglevel = "info"
+logfile = "lametric.log"
+
+
+[lametric-app]
+name = "Exoscale"
+logo = "17776"
+
+
+[status-logo]
+# Logos for status
+
+# Service up: arrow up, green
+up = "120"
+
+# Service down, minor incident: arrow down, yellow
+down-minor = "1067"
+
+# Service down, major incident: arrow down, red
+down-major = "124"
+
+# Service down, on fire
+down-fire = "2715"
+
+# Service under scheduled maintenance: a red clock (animated)
+scheduled = "7419"
+
+# no status recognized: question mark
+no-status = "625"
+
+# maintenance
+tool = "93"
+
+[lametric-country]
+# Country flags
+CH = "469"
+DE = "512"
+AT = "2954"
+BG = "20415"

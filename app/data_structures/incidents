@@ -1,0 +1,21 @@
+[{
+    'ends_at': None,
+    'id': 78811,
+    'inserted_at': '2023-08-15T18:30:02',
+    'service_ids': [10386, 10387, 10400, 10401],
+    'starts_at': '2023-08-15T18:29:16',
+    'title': 'The roof is on fire',
+    'type': 'major',
+    'updated_at': '2023-08-15T18:30:02',
+    'updates': [{
+        'description': 'The roof, the roof, the roof is on fire!',
+        'description_html': '<p>\nThe roof, the roof, the roof is on fire!</p>\n',
+        'id': 97895,
+        'inserted_at': '2023-08-15T18:30:02',
+        'posted_at': '2023-08-15T18:29:16',
+        'subscribers_notified_at': '2023-08-15T18:30:02',
+        'type': 'issue',
+        'updated_at': '2023-08-15T18:30:02'
+    }],
+    'url': 'https://exoscale.uk/incidents/78811'
+}]

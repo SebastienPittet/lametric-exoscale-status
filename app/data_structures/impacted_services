@@ -1,0 +1,85 @@
+[{
+    'id': 10386,
+    'name': 'CH-DK-2',
+    'current_incident_type': 'major',
+    'description': None,
+    'children': [{
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10393,
+        'name': 'API'
+    }, {
+        'children': [],
+        'current_incident_type': 'major',
+        'description': None,
+        'id': 10400,        
+        'name': 'Compute'
+    }, {
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10408,
+        'name': 'Managed Kubernetes SKS'
+    }, {
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10415,
+        'name': 'Network Load Balancer NLB'
+    }, {
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10422,
+        'name': 'Object Storage SOS'
+    }]
+}, {
+    'id': 10400,
+    'name': 'Compute',
+    'current_incident_type': 'major',
+    'description': None,
+    'children': []
+}, {
+    'id': 10387,
+    'name': 'DE-FRA-1',
+    'current_incident_type': 'major',
+    'description': None,
+    'children': [{
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10394,
+        'name': 'API'
+    }, {
+        'children': [],
+        'current_incident_type': 'major',
+        'description': None,
+        'id': 10401,
+        'name': 'Compute'
+    }, {
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10409,
+        'name': 'Managed Kubernetes SKS'
+    }, {
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10416,
+        'name': 'Network Load Balancer NLB'
+    }, {
+        'children': [],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10423,
+        'name': 'Object Storage SOS'
+    }]
+}, {
+    'id': 10401,
+    'name': 'Compute',
+    'current_incident_type': 'major',
+    'description': None,
+    'children': []
+}]

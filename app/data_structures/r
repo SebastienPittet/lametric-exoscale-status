@@ -1,0 +1,310 @@
+{
+    'incidents': [{
+        'ends_at': None,
+        'id': 78811,
+        'inserted_at': '2023-08-15T18:30:02',
+        'service_ids': [10386, 10387, 10400, 10401],
+        'starts_at': '2023-08-15T18:29:16',
+        'title': 'The roof is on fire',
+        'type': 'major',
+        'updated_at': '2023-08-15T18:30:02',
+        'updates': [{
+            'description': 'The roof, the roof, the roof is on fire!',
+            'description_html': '<p>\nThe roof, the roof, the roof is on fire!</p>\n',
+            'id': 97895,
+            'inserted_at': '2023-08-15T18:30:02',
+            'posted_at': '2023-08-15T18:29:16',
+            'subscribers_notified_at': '2023-08-15T18:30:02',
+            'type': 'issue',
+            'updated_at': '2023-08-15T18:30:02'
+        }],
+        'url': 'https://exoscale.uk/incidents/78811'
+    }],
+    'maintenances': [],
+    'services': [{
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10383,
+            'name': 'Portal'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10384,
+            'name': 'DNS'
+        }],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10382,
+        'name': 'Global'
+    }, {
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10392,
+            'name': 'API'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10399,
+            'name': 'Compute'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10407,
+            'name': 'Managed Kubernetes SKS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10414,
+            'name': 'Network Load Balancer NLB'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10421,
+            'name': 'Object Storage SOS'
+        }],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10385,
+        'name': 'CH-GVA-2'
+    }, {
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10393,
+            'name': 'API'
+        }, {
+            'children': [],
+            'current_incident_type': 'major',
+            'description': None,
+            'id': 10400,
+            'name': 'Compute'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10408,
+            'name': 'Managed Kubernetes SKS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10415,
+            'name': 'Network Load Balancer NLB'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10422,
+            'name': 'Object Storage SOS'
+        }],
+        'current_incident_type': 'major',
+        'description': None,
+        'id': 10386,
+        'name': 'CH-DK-2'
+    }, {
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10394,
+            'name': 'API'
+        }, {
+            'children': [],
+            'current_incident_type': 'major',
+            'description': None,
+            'id': 10401,
+            'name': 'Compute'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10409,
+            'name': 'Managed Kubernetes SKS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10416,
+            'name': 'Network Load Balancer NLB'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10423,
+            'name': 'Object Storage SOS'
+        }],
+        'current_incident_type': 'major',
+        'description': None,
+        'id': 10387,
+        'name': 'DE-FRA-1'
+    }, {
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10395,
+            'name': 'API'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10402,
+            'name': 'Compute'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10410,
+            'name': 'Managed Kubernetes SKS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10417,
+            'name': 'Network Load Balancer NLB'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10424,
+            'name': 'Object Storage SOS'
+        }],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10388,
+        'name': 'DE-MUC-1'
+    }, {
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10396,
+            'name': 'API'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10403,
+            'name': 'Compute'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10411,
+            'name': 'Managed Kubernetes SKS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10418,
+            'name': 'Network Load Balancer NLB'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10425,
+            'name': 'Object Storage SOS'
+        }],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10389,
+        'name': 'AT-VIE-1'
+    }, {
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10397,
+            'name': 'API'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10404,
+            'name': 'Compute'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10412,
+            'name': 'Managed Kubernetes SKS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10419,
+            'name': 'Network Load Balancer NLB'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10426,
+            'name': 'Object Storage SOS'
+        }],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10390,
+        'name': 'AT-VIE-2'
+    }, {
+        'children': [{
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10398,
+            'name': 'API'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10405,
+            'name': 'Compute'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10406,
+            'name': 'Database service DBaaS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10413,
+            'name': 'Managed Kubernetes SKS'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10420,
+            'name': 'Network Load Balancer NLB'
+        }, {
+            'children': [],
+            'current_incident_type': None,
+            'description': None,
+            'id': 10427,
+            'name': 'Object Storage SOS'
+        }],
+        'current_incident_type': None,
+        'description': None,
+        'id': 10391,
+        'name': 'BG-SOF-1'
+    }],
+    'status_page': {
+        'name': 'Exoscale testing',
+        'url': 'exoscale.com',
+        'subdomain': 'exoscalestatustesting',
+        'time_zone': 'Europe/Zurich',
+        'current_incident_type': 'major',
+        'default_lang': 'en'
+    },
+    'upcoming_maintenances': []
+}

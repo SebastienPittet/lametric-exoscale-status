@@ -1,5 +1,5 @@
 from flask import Flask
-from lib import exoscalestatus
+from lib import exoscalestatus, configuration, lametric
 import json
 
 app = Flask(__name__)
@@ -7,12 +7,12 @@ app = Flask(__name__)
 # ############## INIT ###############
 
 # Load configuration from config.toml
-configuration = exoscalestatus.loadconfig()
+config = configuration.load_config()
 
 # init LAMETRIC logos
 # Country flags and Status logos
-FLAGS = configuration["lametric-country"]
-STATUS = configuration["status-logo"]
+FLAGS = config["lametric-country"]
+STATUS = config["status-logo"]
 
 # ############ ROUTES ###############
 
@@ -25,10 +25,10 @@ def home():
 @app.route("/api/v1/")
 def apiv1():
     # Create the Title frame
-    frames = exoscalestatus.init_frames(configuration)
+    frames = lametric.init_frames(config)
 
     # Request the Exoscale Status page
-    r = exoscalestatus.getExoscaleStatus(configuration["exoscale"]["status_url"])
+    r = exoscalestatus.fetch_ExoscaleStatus(config["exoscale"]["status_url"])
 
     # About the Services
     services = r["services"]
@@ -38,21 +38,26 @@ def apiv1():
     incidents = r["incidents"]
 
     if not incidents:
-        frames = exoscalestatus.append_frame(frames, STATUS["up"], "HEALTHY")
+        frames = lametric.append_frame(frames, STATUS["up"], "HEALTHY")
     else:
         # Add the frames for all the sub-services
-        frames = exoscalestatus.addServiceFrames(services, incidents, frames, STATUS)
+        frames = lametric.addServiceFrames(services,
+                                                 incidents,
+                                                 frames,
+                                                 STATUS)
 
     # About Maintenances
     maintenances = r["maintenances"]
     if maintenances:
-        frames = exoscalestatus.append_frame(
+        frames = lametric.append_frame(
             frames,
             STATUS["tool"],
             "Maintenance scheduled: {}".format(len(maintenances)),
         )
     else:
-        frames = exoscalestatus.append_frame(frames, STATUS["tool"], "No maintenance.")
+        frames = lametric.append_frame(frames,
+                                             STATUS["tool"],
+                                             "No maintenance.")
 
     return json.dumps(frames)
 

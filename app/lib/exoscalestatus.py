@@ -1,26 +1,8 @@
-import tomli
 from requests import get
 from requests.exceptions import HTTPError
-import os
-
-directory = os.getcwd()
-CONFIG_FILE = f"{directory}/config.toml"
 
 
-def loadconfig(Confile: str = CONFIG_FILE) -> dict:
-    # Reads the Configuration file and return the content as Dictionary.
-    toml_dict = {}
-
-    with open(Confile, "rb") as f:
-        try:
-            toml_dict = tomli.load(f)
-        except tomli.TOMLDecodeError:
-            print("Invalid configuration file. Please check TOML Synthax.")
-            exit()
-    return toml_dict
-
-
-def getExoscaleStatus(StatusURL: str = "https://statuspal.eu/api/v2/status_pages/exoscalestatus/summary") -> dict:
+def fetch_ExoscaleStatus(StatusURL: str = "https://statuspal.eu/api/v2/status_pages/exoscalestatus/summary") -> dict:
     # Requests the status of Exoscale Services and
     # returns a JSON with the status.
     try:
@@ -31,30 +13,6 @@ def getExoscaleStatus(StatusURL: str = "https://statuspal.eu/api/v2/status_pages
         print(f"HTTP error occurred: {http_err}")
         exit()
     return r
-
-
-def init_frames(configuration: dict) -> dict:
-    """
-    initialize the content for LAMETRIC (1st frame)
-    input: configuraton dictionary
-    output: frames dictionary
-    """
-    # Initialize the frames for LAMETRIC
-    APP_NAME = configuration["lametric-app"]["name"]
-    APP_LOGO = configuration["lametric-app"]["logo"]
-
-    default_frame = {
-        "frames": [
-            {
-                "icon": APP_LOGO,
-                "text": APP_NAME,
-            }
-        ]
-    }
-
-    frames = {}
-    frames = default_frame
-    return frames
 
 
 def addParentSrv(services, parentName=None, parentId=None):
@@ -95,44 +53,3 @@ def addParentSrv(services, parentName=None, parentId=None):
             }
             nodes.append(node)
     return nodes
-
-
-def append_frame(frames: dict, logo: str, text: str) -> dict:
-    # Add a new frame to display
-
-    # create new frame
-    frame = {
-        "icon": logo,
-        "text": text,
-    }
-
-    frames["frames"].append(frame)
-    return frames
-
-
-def addServiceFrames(services, incidents, frames: dict, ICONS: dict) -> dict:
-    # parse the incidents and add status frames
-
-    # filter on impacted services AND children
-    # The parent (Exoscale root service) has an parentId == None
-    # So, the 2nd condition belwo filters out the root + the zones,
-    # as they have a parentId == None
-    impacted_services = [
-        service
-        for service in services
-        if service["current_incident_type"] and service["parentId"]
-    ]
-
-    for service in impacted_services:
-        # aggregate the parentName + childName
-        serviceFullName = service["parent"] + " " + service["name"]
-
-        if service["current_incident_type"] == "minor":
-            frames = append_frame(frames, ICONS["down-minor"], serviceFullName)
-        elif service["current_incident_type"] == "major":
-            frames = append_frame(frames, ICONS["down-fire"], serviceFullName)
-        elif service["current_incident_type"] == "scheduled":
-            frames = append_frame(frames, ICONS["scheduled"], serviceFullName)
-        else:
-            frames = append_frame(frames, ICONS["no-status"], service["name"])
-    return frames

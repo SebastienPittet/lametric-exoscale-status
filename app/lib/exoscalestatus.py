@@ -1,3 +1,40 @@
+"""
+Fetch Exoscale status page and return a JSON with the status of all services.
+
+Data structure of the JSON returned by the Exoscale Status page (example):
+
+/
+├── incidents
+│   ├── id:1
+│   └── id:2
+├── maintenances
+└── services
+    ├── Portal
+    ├── DNS
+    ├── Global
+    │   ├── API
+    │   ├── Compute
+    │   ├── Managed Kubernetes SKS
+    │   ├── Network Load Balancer NLB
+    │   └── Object Storage SOS
+    ├── CH-GVA-2
+    │   ├── API
+    │   ├── Compute
+    │   ├── Managed Kubernetes SKS
+    │   ├── Network Load Balancer NLB
+    │   └── Object Storage SOS
+    ├── CH-DK-2
+    │   ├── API
+    │   ├── Compute
+    │   ├── Managed Kubernetes SKS
+    │   ├── Network Load Balancer NLB
+    │   └── Object Storage SOS
+    └── ...
+        ├── ...
+        └── ...
+
+"""
+
 from requests import get
 from requests.exceptions import HTTPError
 

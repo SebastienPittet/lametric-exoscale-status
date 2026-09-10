@@ -1,3 +1,6 @@
+"""
+This module contains functions to load the configuration file.
+"""
 import tomli
 import os
 

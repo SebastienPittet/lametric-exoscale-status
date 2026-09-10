@@ -42,9 +42,8 @@ def apiv1():
     else:
         # Add the frames for all the sub-services
         frames = lametric.addServiceFrames(services,
-                                                 incidents,
-                                                 frames,
-                                                 STATUS)
+                                            frames,
+                                            STATUS)
 
     # About Maintenances
     maintenances = r["maintenances"]
@@ -56,8 +55,8 @@ def apiv1():
         )
     else:
         frames = lametric.append_frame(frames,
-                                             STATUS["tool"],
-                                             "No maintenance.")
+                                        STATUS["tool"],
+                                        "No maintenance.")
 
     return json.dumps(frames)
 

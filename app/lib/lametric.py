@@ -1,4 +1,6 @@
-
+"""
+This module contains functions to create the frames for the LAMETRIC display.
+"""
 
 def init_frames(configuration: dict) -> dict:
     """

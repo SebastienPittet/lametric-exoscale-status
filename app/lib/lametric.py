@@ -2,6 +2,7 @@
 This module contains functions to create the frames for the LAMETRIC display.
 """
 
+
 def init_frames(configuration: dict) -> dict:
     """
     initialize the content for LAMETRIC (1st frame)
@@ -44,7 +45,7 @@ def addServiceFrames(services, frames: dict, ICONS: dict) -> dict:
 
     # filter on impacted services AND children
     # The parent (Exoscale root service) has an parentId == None
-    # So, the 2nd condition belwo filters out the root + the zones,
+    # So, the 2nd condition below filters out the root + the zones,
     # as they have a parentId == None
     impacted_services = [
         service

@@ -11,7 +11,6 @@ config = configuration.load_config()
 
 # init LAMETRIC logos
 # Country flags and Status logos
-FLAGS = config["lametric-country"]
 STATUS = config["status-logo"]
 
 # ############ ROUTES ###############
@@ -42,8 +41,8 @@ def apiv1():
     else:
         # Add the frames for all the sub-services
         frames = lametric.addServiceFrames(services,
-                                            frames,
-                                            STATUS)
+                                           frames,
+                                           STATUS)
 
     # About Maintenances
     maintenances = r["maintenances"]

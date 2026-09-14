@@ -43,13 +43,13 @@ def fetch_ExoscaleStatus(StatusURL: str = "https://statuspal.eu/api/v2/status_pa
     # Requests the status of Exoscale Services and
     # returns a JSON with the status.
     try:
-        r = get(StatusURL).json()
+        response = get(StatusURL, timeout=10)
 
     except HTTPError as http_err:
         # invalid HTTP response, bail.
         print(f"HTTP error occurred: {http_err}")
         exit()
-    return r
+    return response.json()
 
 
 def addParentSrv(services, parentName=None, parentId=None):

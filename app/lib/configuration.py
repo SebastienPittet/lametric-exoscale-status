@@ -3,11 +3,15 @@
 The StatusPal API v2 is public: no API key is required. When the optional
 STATUSPAL_API_KEY environment variable is set, the key is sent to StatusPal
 as a Bearer token; it must never be stored in the configuration file.
+
+TOML values arrive typed as ``object``; every value is validated
+(``isinstance``) before being stored in the frozen ``AppConfig``.
 """
 from __future__ import annotations
 
 import os
 import tomllib
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,7 +20,7 @@ DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.toml"
 API_KEY_ENV_VAR = "STATUSPAL_API_KEY"
 
 #: Legacy aliases accepted in [status-logo], mapped to canonical keys.
-ICON_ALIASES = {
+ICON_ALIASES: Mapping[str, str] = {
     "minor": "down-minor",
     "major": "down-major",
     "critical": "down-fire",
@@ -24,7 +28,7 @@ ICON_ALIASES = {
     "unknown": "no-status",
 }
 
-REQUIRED_ICONS = (
+REQUIRED_ICONS: tuple[str, ...] = (
     "up",
     "down-minor",
     "down-major",
@@ -54,7 +58,42 @@ class AppConfig:
     rate_limit_per_minute: int
 
 
-def _normalize_icons(raw: dict) -> dict[str, str]:
+def _as_table(raw: Mapping[str, object], name: str) -> dict[str, object]:
+    """Return the required [name] table, or raise ConfigurationError."""
+    value = raw.get(name)
+    if not isinstance(value, dict):
+        raise ConfigurationError(f"missing or invalid [{name}] table")
+    return value
+
+
+def _optional_table(raw: Mapping[str, object], name: str) -> dict[str, object]:
+    """Return the optional [name] table, or an empty mapping when absent."""
+    value = raw.get(name)
+    return value if isinstance(value, dict) else {}
+
+
+def _require_str(table: Mapping[str, object], key: str, where: str) -> str:
+    """Return a required non-empty string value, or raise ConfigurationError."""
+    value = table.get(key)
+    if not isinstance(value, str) or not value:
+        raise ConfigurationError(f"{where} must define a non-empty string '{key}'")
+    return value
+
+
+def _require_number(
+    table: Mapping[str, object], key: str, default: float, where: str
+) -> float:
+    """Return a required positive number, using default when the key is absent."""
+    value = table.get(key, default)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ConfigurationError(f"{where} '{key}' must be a number")
+    number = float(value)
+    if number <= 0:
+        raise ConfigurationError(f"{where} '{key}' must be positive")
+    return number
+
+
+def _normalize_icons(raw: Mapping[str, object]) -> dict[str, str]:
     """Normalize icon keys (accepting legacy aliases) and check presence."""
     icons: dict[str, str] = {}
     for key, value in raw.items():
@@ -78,41 +117,45 @@ def load_config(path: str | Path | None = None) -> AppConfig:
     config_path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
     try:
         with open(config_path, "rb") as handle:
-            raw = tomllib.load(handle)
+            raw: dict[str, object] = tomllib.load(handle)
     except FileNotFoundError as exc:
         raise ConfigurationError(f"config file not found: {config_path}") from exc
     except (OSError, tomllib.TOMLDecodeError) as exc:
         raise ConfigurationError(f"invalid config file {config_path}: {exc}") from exc
 
-    statuspal = raw.get("statuspal") or {}
-    base_url = statuspal.get("base_url")
-    subdomain = statuspal.get("status_page_subdomain")
-    if not base_url or not subdomain:
-        raise ConfigurationError(
-            "[statuspal] must define base_url and status_page_subdomain"
-        )
+    statuspal = _as_table(raw, "statuspal")
+    base_url = _require_str(statuspal, "base_url", "[statuspal]")
+    subdomain = _require_str(statuspal, "status_page_subdomain", "[statuspal]")
+    timeout = _require_number(
+        statuspal, "request_timeout_seconds", 10.0, "[statuspal]"
+    )
 
-    lametric_app = raw.get("lametric-app") or {}
-    app_name = lametric_app.get("name")
-    app_logo = lametric_app.get("logo")
-    if not app_name or not app_logo:
-        raise ConfigurationError("[lametric-app] must define name and logo")
+    lametric_app = _as_table(raw, "lametric-app")
+    app_name = _require_str(lametric_app, "name", "[lametric-app]")
+    app_logo = _require_str(lametric_app, "logo", "[lametric-app]")
 
-    status_icons = _normalize_icons(raw.get("status-logo") or {})
+    status_icons = _normalize_icons(_as_table(raw, "status-logo"))
 
     # The public API v2 works without a key; only use it when configured.
     api_key = os.environ.get(API_KEY_ENV_VAR, "").strip()
 
     return AppConfig(
-        statuspal_base_url=str(base_url).rstrip("/"),
-        status_page_subdomain=str(subdomain),
+        statuspal_base_url=base_url.rstrip("/"),
+        status_page_subdomain=subdomain,
         statuspal_api_key=api_key,
-        request_timeout_seconds=float(statuspal.get("request_timeout_seconds", 10)),
-        cache_ttl_seconds=float((raw.get("caching") or {}).get("ttl_seconds", 30)),
-        app_name=str(app_name),
-        app_logo=str(app_logo),
+        request_timeout_seconds=timeout,
+        cache_ttl_seconds=_require_number(
+            _optional_table(raw, "caching"), "ttl_seconds", 30.0, "[caching]"
+        ),
+        app_name=app_name,
+        app_logo=app_logo,
         status_icons=status_icons,
         rate_limit_per_minute=int(
-            (raw.get("security") or {}).get("rate_limit_per_minute", 120)
+            _require_number(
+                _optional_table(raw, "security"),
+                "rate_limit_per_minute",
+                120.0,
+                "[security]",
+            )
         ),
     )

@@ -1,13 +1,30 @@
 """Build the frames displayed by a LAMETRIC Time clock."""
 from __future__ import annotations
 
-from lib.models import Status, StatusData
+from collections.abc import Mapping
+from typing import TypedDict
+
+from lib.models import Lifecycle, PageStatus, Status, StatusData
 from lib.subscription import Subscription
 
 MAX_FRAMES = 15
 FRAME_TEXT_LIMIT = 32
 
-_ICON_BY_STATUS = {
+
+class Frame(TypedDict):
+    """One LAMETRIC frame: an icon id and a text line."""
+
+    icon: str
+    text: str
+
+
+class FramesPayload(TypedDict):
+    """The JSON document sent to a LAMETRIC clock."""
+
+    frames: list[Frame]
+
+
+_ICON_BY_STATUS: dict[Status, str] = {
     Status.OK: "up",
     Status.MINOR: "down-minor",
     Status.MAJOR: "down-major",
@@ -24,39 +41,39 @@ def _clip(text: str, limit: int = FRAME_TEXT_LIMIT) -> str:
     return text[: limit - 1] + "\u2026"
 
 
-def _finalize(frames: list[dict], icons: dict) -> dict:
+def _finalize(frames: list[Frame], icons: Mapping[str, str]) -> FramesPayload:
     """Truncate texts and cap the list at MAX_FRAMES with an overflow note."""
     frames = [
-        {"icon": frame["icon"], "text": _clip(frame["text"])} for frame in frames
+        Frame(icon=frame["icon"], text=_clip(frame["text"])) for frame in frames
     ]
     if len(frames) > MAX_FRAMES:
         removed = len(frames) - (MAX_FRAMES - 1)
         frames = frames[: MAX_FRAMES - 1]
         frames.append(
-            {"icon": icons["no-status"], "text": f"+{removed} more\u2026"}
+            Frame(icon=icons["no-status"], text=f"+{removed} more\u2026")
         )
-    return {"frames": frames}
+    return FramesPayload(frames=frames)
 
 
 def build_frames(
     data: StatusData,
     app_name: str,
     app_logo: str,
-    icons: dict,
+    icons: Mapping[str, str],
     subscription: Subscription,
-) -> dict:
-    """Return {"frames": [{"icon": ..., "text": ...}, ...]} for the clock."""
-    frames = [{"icon": app_logo, "text": app_name}]
+) -> FramesPayload:
+    """Return the frames for the clock, filtered by the subscription."""
+    frames = [Frame(icon=app_logo, text=app_name)]
 
-    if data.page_status == "unknown":
-        frames.append({"icon": icons["no-status"], "text": "Status unavailable"})
+    if data.page_status is PageStatus.UNKNOWN:
+        frames.append(Frame(icon=icons["no-status"], text="Status unavailable"))
         return _finalize(frames, icons)
 
     if subscription.zones:
         zones = [zone for zone in data.zones if zone.slug.lower() in subscription.zones]
         if not zones:
             frames.append(
-                {"icon": icons["no-status"], "text": "No subscribed services matched"}
+                Frame(icon=icons["no-status"], text="No subscribed services matched")
             )
             return _finalize(frames, icons)
     else:
@@ -70,45 +87,54 @@ def build_frames(
     impacted = False
     for zone in zones:
         for service in zone.services:
-            if service.status == Status.OK or not allowed(service.slug, service.name):
+            if service.status is Status.OK or not allowed(service.slug, service.name):
                 continue
             impacted = True
             frames.append(
-                {
-                    "icon": icons[_ICON_BY_STATUS[service.status]],
-                    "text": f"{zone.name} {service.name}",
-                }
+                Frame(
+                    icon=icons[_ICON_BY_STATUS[service.status]],
+                    text=f"{zone.name} {service.name}",
+                )
             )
 
-    for service in data.services:
-        if service.scope != "global" or service.status == Status.OK:
+    for global_service in data.services:
+        if (
+            global_service.scope != "global"
+            or global_service.status is Status.OK
+        ):
             continue
-        if not allowed(service.slug, service.name):
+        if not allowed(global_service.slug, global_service.name):
             continue
         impacted = True
         frames.append(
-            {"icon": icons[_ICON_BY_STATUS[service.status]], "text": service.name}
+            Frame(
+                icon=icons[_ICON_BY_STATUS[global_service.status]],
+                text=global_service.name,
+            )
         )
 
     if not impacted:
-        if data.page_status == "operational":
-            frames.append({"icon": icons["up"], "text": "HEALTHY"})
+        if data.page_status is PageStatus.OPERATIONAL:
+            frames.append(Frame(icon=icons["up"], text="HEALTHY"))
         else:
             frames.append(
-                {"icon": icons["no-status"], "text": f"Status: {data.page_status}"}
+                Frame(
+                    icon=icons["no-status"],
+                    text=f"Status: {data.page_status.value}",
+                )
             )
 
     for notice in data.maintenances[:3]:
-        if notice.lifecycle == "pending":
+        if notice.lifecycle is Lifecycle.PENDING:
             frames.append(
-                {"icon": icons["scheduled"], "text": f"Maintenance: {notice.title}"}
+                Frame(icon=icons["scheduled"], text=f"Maintenance: {notice.title}")
             )
         else:
             frames.append(
-                {
-                    "icon": icons["scheduled"],
-                    "text": f"Maintenance in progress: {notice.title}",
-                }
+                Frame(
+                    icon=icons["scheduled"],
+                    text=f"Maintenance in progress: {notice.title}",
+                )
             )
 
     return _finalize(frames, icons)

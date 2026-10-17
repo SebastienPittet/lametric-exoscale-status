@@ -95,7 +95,13 @@ python3 -m venv .venv
 
 .venv/bin/pytest -q
 .venv/bin/ruff check app tests
+.venv/bin/mypy app tests
 ```
+
+The codebase is strongly typed: domain models are frozen dataclasses backed
+by closed-set `Enum`s, the JSON boundary is `object` with explicit narrowing
+helpers, and all modules are checked with `mypy --strict` (see `mypy.ini`).
+No `Any` leaks across module boundaries.
 
 ## Running the app
 
@@ -127,4 +133,4 @@ The image listens on port `6000` and performs a `wget` health check against
 ## Contributing
 
 Pull requests are welcome — tests are the specification, please keep them
-green (`pytest` + `ruff check app tests`).
+green (`pytest` + `ruff check app tests` + `mypy app tests`).

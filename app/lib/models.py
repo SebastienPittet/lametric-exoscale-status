@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Iterable
+from typing import Iterable, Protocol
 
 
 class Status(str, Enum):
@@ -16,6 +16,29 @@ class Status(str, Enum):
     CRITICAL = "critical"
     MAINTENANCE = "maintenance"
     UNKNOWN = "unknown"
+
+
+class PageStatus(str, Enum):
+    """Overall status of the status page."""
+
+    OPERATIONAL = "operational"
+    DEGRADED = "degraded"
+    UNAVAILABLE = "unavailable"
+    UNKNOWN = "unknown"
+
+
+class NoticeType(str, Enum):
+    """Kind of a notice."""
+
+    INCIDENT = "incident"
+    MAINTENANCE = "maintenance"
+
+
+class Lifecycle(str, Enum):
+    """Lifecycle state of a notice."""
+
+    PENDING = "pending"
+    ACTIVE = "active"
 
 
 _SEVERITY_RANK: dict[Status, int] = {
@@ -35,6 +58,12 @@ def worst(statuses: Iterable[Status]) -> Status:
         if _SEVERITY_RANK.get(status, 0) > _SEVERITY_RANK[result]:
             result = status
     return result
+
+
+class StatusDataProvider(Protocol):
+    """Anything that can fetch a status snapshot (the client, or a test double)."""
+
+    def fetch_status_data(self) -> StatusData: ...
 
 
 @dataclass(frozen=True)
@@ -78,11 +107,11 @@ class Notice:
     """An incident or maintenance notice."""
 
     id: str
-    notice_type: str
+    notice_type: NoticeType
     title: str
     status: str
     severity: str | None
-    lifecycle: str
+    lifecycle: Lifecycle
     starts_at: str | None
     ends_at: str | None
     description: str
@@ -92,7 +121,7 @@ class Notice:
 class StatusData:
     """Aggregated status snapshot for one fetch of the StatusPal API."""
 
-    page_status: str
+    page_status: PageStatus
     services: tuple[Service, ...]
     zones: tuple[Zone, ...]
     incidents: tuple[Notice, ...]

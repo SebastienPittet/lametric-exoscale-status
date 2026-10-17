@@ -3,20 +3,21 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import Callable, TypeVar
+from collections.abc import Callable
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
 
-class TtlCache:
+class TtlCache(Generic[T]):
     """A simple in-memory cache with a per-entry TTL (monotonic clock)."""
 
     def __init__(self, ttl_seconds: float) -> None:
         self._ttl = float(ttl_seconds)
-        self._store: dict[str, tuple[object, float]] = {}
+        self._store: dict[str, tuple[T, float]] = {}
         self._lock = threading.Lock()
 
-    def get(self, key: str):
+    def get(self, key: str) -> T | None:
         """Return the cached value, or None when absent or expired (purged)."""
         with self._lock:
             entry = self._store.get(key)
@@ -28,7 +29,7 @@ class TtlCache:
                 return None
             return value
 
-    def set(self, key: str, value: object) -> None:
+    def set(self, key: str, value: T) -> None:
         """Store a value with the configured TTL."""
         with self._lock:
             self._store[key] = (value, time.monotonic() + self._ttl)
@@ -39,7 +40,7 @@ class TtlCache:
             self._store.pop(key, None)
 
 
-class CachedFetch:
+class CachedFetch(Generic[T]):
     """Fetch a value through a cache, with a single in-flight fetch per key.
 
     Concurrent callers share one fetcher call (lock + double-check).
@@ -48,7 +49,7 @@ class CachedFetch:
     def __init__(
         self,
         fetcher: Callable[[], T],
-        cache: TtlCache,
+        cache: TtlCache[T],
         key: str = "default",
     ) -> None:
         self._fetcher = fetcher

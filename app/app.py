@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import logging
 
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 
 from lib.cache import CachedFetch, TtlCache
 from lib.configuration import AppConfig, load_config
 from lib.frames import build_frames
-from lib.models import Notice, Status, StatusData
+from lib.models import Notice, PageStatus, Status, StatusData, StatusDataProvider
 from lib.security import RateLimiter, SECURITY_HEADERS
 from lib.statuspal_client import StatusPalClient, StatusPalError
 from lib.subscription import Subscription, SubscriptionError, parse_subscription
@@ -18,19 +18,7 @@ logger = logging.getLogger(__name__)
 APP_NAME = "lametric-exoscale-status"
 APP_VERSION = "2.0.0"
 
-
-class StatusFlaskApp(Flask):
-    """Flask application exposing a test-friendly HTTP ``get`` method.
-
-    ``app.get(path)`` performs an HTTP GET through a throwaway test client
-    and returns the response, which is what the test-suite calls on the
-    application object returned by ``create_app``.
-    """
-
-    def get(self, url: str, **kwargs):
-        return self.test_client().get(url, **kwargs)
-
-_ENDPOINTS = [
+_ENDPOINTS: list[str] = [
     "/",
     "/healthz",
     "/api/v1/",
@@ -40,6 +28,9 @@ _ENDPOINTS = [
     "/api/v1/incidents",
     "/api/v1/maintenances",
 ]
+
+#: Return type of the JSON endpoint handlers.
+JsonResult = Response | tuple[Response, int]
 
 
 def _ensure_logging() -> None:
@@ -54,7 +45,7 @@ def _ensure_logging() -> None:
 def _unavailable_status_data() -> StatusData:
     """Fallback snapshot used when the upstream API is down."""
     return StatusData(
-        page_status="unknown",
+        page_status=PageStatus.UNKNOWN,
         services=(),
         zones=(),
         incidents=(),
@@ -64,20 +55,24 @@ def _unavailable_status_data() -> StatusData:
     )
 
 
-def _notice_dict(notice: Notice) -> dict:
+def _notice_dict(notice: Notice) -> dict[str, object]:
+    """JSON-safe representation of a notice (enum values, not enum objects)."""
     return {
         "id": notice.id,
         "title": notice.title,
         "status": notice.status,
         "severity": notice.severity,
-        "lifecycle": notice.lifecycle,
+        "lifecycle": notice.lifecycle.value,
         "starts_at": notice.starts_at,
         "ends_at": notice.ends_at,
         "description": notice.description,
     }
 
 
-def create_app(config: AppConfig | None = None, client=None) -> Flask:
+def create_app(
+    config: AppConfig | None = None,
+    client: StatusDataProvider | None = None,
+) -> Flask:
     """Application factory for the LAMETRIC status API."""
     if config is None:
         config = load_config()
@@ -85,14 +80,13 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
         client = StatusPalClient(config)
     _ensure_logging()
 
-    app = StatusFlaskApp(__name__)
+    app = Flask(__name__)
     limiter = RateLimiter(config.rate_limit_per_minute)
-    fetcher = CachedFetch(
-        client.fetch_status_data, TtlCache(config.cache_ttl_seconds), key="status"
-    )
+    cache = TtlCache[StatusData](config.cache_ttl_seconds)
+    fetcher = CachedFetch[StatusData](client.fetch_status_data, cache, key="status")
 
     @app.before_request
-    def enforce_rate_limit():
+    def enforce_rate_limit() -> Response | tuple[Response, int] | None:
         if not limiter.hit(request.remote_addr or "unknown"):
             return (
                 jsonify({"error": "rate limit exceeded", "retry_after_seconds": 60}),
@@ -101,7 +95,7 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
         return None
 
     @app.after_request
-    def apply_security_headers(response):
+    def apply_security_headers(response: Response) -> Response:
         for header, value in SECURITY_HEADERS.items():
             response.headers[header] = value
         return response
@@ -118,7 +112,7 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
             return None
 
     @app.route("/")
-    def index():
+    def index() -> JsonResult:
         return jsonify(
             {
                 "name": APP_NAME,
@@ -132,11 +126,11 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
         )
 
     @app.route("/healthz")
-    def healthz():
+    def healthz() -> JsonResult:
         return jsonify({"status": "ok"})
 
     @app.route("/api/v1/")
-    def lametric_frames():
+    def lametric_frames() -> JsonResult:
         try:
             subscription: Subscription = parse_subscription(request.args)
         except SubscriptionError as exc:
@@ -154,7 +148,7 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
         return jsonify(frames)
 
     @app.route("/api/v1/status")
-    def status_view():
+    def status_view() -> JsonResult:
         data = load_data_or_503()
         if data is None:
             return jsonify({"error": "upstream_unavailable"}), 503
@@ -162,11 +156,11 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
             1
             for zone in data.zones
             for service in zone.services
-            if service.status != Status.OK
+            if service.status is not Status.OK
         )
         return jsonify(
             {
-                "current_status": data.page_status,
+                "current_status": data.page_status.value,
                 "fetched_at": data.fetched_at.isoformat() if data.fetched_at else None,
                 "impacted_services": impacted,
                 "active_incidents": len(data.incidents),
@@ -175,7 +169,7 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
         )
 
     @app.route("/api/v1/zones")
-    def zones_view():
+    def zones_view() -> JsonResult:
         data = load_data_or_503()
         if data is None:
             return jsonify({"error": "upstream_unavailable"}), 503
@@ -201,7 +195,7 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
         )
 
     @app.route("/api/v1/services")
-    def services_view():
+    def services_view() -> JsonResult:
         data = load_data_or_503()
         if data is None:
             return jsonify({"error": "upstream_unavailable"}), 503
@@ -222,32 +216,36 @@ def create_app(config: AppConfig | None = None, client=None) -> Flask:
         )
 
     @app.route("/api/v1/incidents")
-    def incidents_view():
+    def incidents_view() -> JsonResult:
         data = load_data_or_503()
         if data is None:
             return jsonify({"error": "upstream_unavailable"}), 503
         return jsonify({"incidents": [_notice_dict(n) for n in data.incidents]})
 
     @app.route("/api/v1/maintenances")
-    def maintenances_view():
+    def maintenances_view() -> JsonResult:
         data = load_data_or_503()
         if data is None:
             return jsonify({"error": "upstream_unavailable"}), 503
         return jsonify({"maintenances": [_notice_dict(n) for n in data.maintenances]})
 
     @app.errorhandler(404)
-    def handle_not_found(_error):
+    def handle_not_found(_error: Exception) -> JsonResult:
         return jsonify({"error": "not_found"}), 404
 
     @app.errorhandler(405)
-    def handle_method_not_allowed(_error):
+    def handle_method_not_allowed(_error: Exception) -> JsonResult:
         return jsonify({"error": "method_not_allowed"}), 405
 
     @app.errorhandler(500)
-    def handle_internal_error(_error):
+    def handle_internal_error(_error: Exception) -> JsonResult:
         return jsonify({"error": "internal_server_error"}), 500
 
     return app
 
 
 app = create_app()
+
+
+if __name__ == "__main__":
+    app.run()

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 MAX_TOKENS_PER_PARAM = 20
@@ -56,7 +57,7 @@ def _parse_tokens(raw: object, param: str) -> frozenset[str]:
     return frozenset(tokens)
 
 
-def parse_subscription(args: dict) -> Subscription:
+def parse_subscription(args: Mapping[str, object]) -> Subscription:
     """Parse the 'zones' and 'services' request parameters into a Subscription."""
     return Subscription(
         zones=_parse_tokens(args.get("zones"), "zones"),

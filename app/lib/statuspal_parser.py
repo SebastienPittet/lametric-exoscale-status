@@ -8,19 +8,31 @@ public JSON document:
   services;
 - ``status_page``: page metadata, including ``current_incident_type``;
 - ``incidents`` / ``maintenances``: active incidents and maintenances.
+
+The JSON boundary is typed as ``object`` (never ``Any``): every value is
+explicitly narrowed with ``isinstance`` before use, so malformed payloads
+are tolerated without leaking untyped data into the domain.
 """
 from __future__ import annotations
 
 import re
-from typing import Any
 
-from lib.models import Notice, Service, Status, Zone, ZoneService
+from lib.models import (
+    Lifecycle,
+    Notice,
+    NoticeType,
+    PageStatus,
+    Service,
+    Status,
+    Zone,
+    ZoneService,
+)
 
 _TAG_RE = re.compile(r"<[^>]+>")
 _WHITESPACE_RE = re.compile(r"\s+")
 
 #: Mapping of StatusPal v2 incident types to a service Status.
-_INCIDENT_TYPE_TO_STATUS = {
+_INCIDENT_TYPE_TO_STATUS: dict[str, Status] = {
     "none": Status.OK,
     "ok": Status.OK,
     "operational": Status.OK,
@@ -31,14 +43,14 @@ _INCIDENT_TYPE_TO_STATUS = {
     "scheduled": Status.MAINTENANCE,
 }
 
-#: Mapping of StatusPal v2 incident types to the page status string.
-_INCIDENT_TYPE_TO_PAGE_STATUS = {
-    "none": "operational",
-    "ok": "operational",
-    "operational": "operational",
-    "minor": "degraded",
-    "major": "unavailable",
-    "critical": "unavailable",
+#: Mapping of StatusPal v2 incident types to the page status.
+_INCIDENT_TYPE_TO_PAGE_STATUS: dict[str, PageStatus] = {
+    "none": PageStatus.OPERATIONAL,
+    "ok": PageStatus.OPERATIONAL,
+    "operational": PageStatus.OPERATIONAL,
+    "minor": PageStatus.DEGRADED,
+    "major": PageStatus.UNAVAILABLE,
+    "critical": PageStatus.UNAVAILABLE,
 }
 
 
@@ -50,7 +62,7 @@ def to_plain_text(html: str | None) -> str:
     return _WHITESPACE_RE.sub(" ", text).strip()
 
 
-def status_from_value(value: Any) -> Status:
+def status_from_value(value: object) -> Status:
     """Map a raw StatusPal v2 incident type to a Status.
 
     ``None``/empty mean "no incident" and map to OK; unknown values map
@@ -64,65 +76,94 @@ def status_from_value(value: Any) -> Status:
     return _INCIDENT_TYPE_TO_STATUS.get(key, Status.UNKNOWN)
 
 
-def page_status_from_value(value: Any) -> str:
-    """Map a raw StatusPal v2 incident type to the page status string.
+def page_status_from_value(value: object) -> PageStatus:
+    """Map a raw StatusPal v2 incident type to the page status.
 
-    ``None``/empty/"none" mean "no incident" -> "operational"; minor ->
-    "degraded"; major/critical -> "unavailable"; unknown values -> "unknown".
+    ``None``/empty/"none" mean "no incident" -> OPERATIONAL; minor ->
+    DEGRADED; major/critical -> UNAVAILABLE; unknown values -> UNKNOWN.
     """
     if value is None:
-        return "operational"
+        return PageStatus.OPERATIONAL
     key = str(value).strip().lower()
     if key in ("", "none"):
-        return "operational"
-    return _INCIDENT_TYPE_TO_PAGE_STATUS.get(key, "unknown")
+        return PageStatus.OPERATIONAL
+    return _INCIDENT_TYPE_TO_PAGE_STATUS.get(key, PageStatus.UNKNOWN)
 
 
 def _slugify(name: str) -> str:
     """Derive a slug from a display name (lowercase, ``-`` separators)."""
-    slug = _WHITESPACE_RE.sub("-", str(name).strip().lower())
+    slug = _WHITESPACE_RE.sub("-", name.strip().lower())
     slug = re.sub(r"[^a-z0-9-]", "", slug)
     return slug.strip("-")
 
 
-def _services_list(payload: Any) -> list:
+def _as_dict(value: object) -> dict[str, object] | None:
+    """Narrow a JSON value to an object, or None when it is not one."""
+    return value if isinstance(value, dict) else None
+
+
+def _as_list(value: object) -> list[object] | None:
+    """Narrow a JSON value to an array, or None when it is not one."""
+    return value if isinstance(value, list) else None
+
+
+def _as_str(value: object) -> str:
+    """Coerce a JSON value to a string (empty string for None)."""
+    return "" if value is None else str(value)
+
+
+def _as_optional_str(value: object) -> str | None:
+    """Return the value when it is a non-empty-or-empty string, else None."""
+    return value if isinstance(value, str) else None
+
+
+def _services_list(payload: object) -> list[object]:
     """Return payload["services"] when it is a list, else an empty list."""
-    services = payload.get("services") if isinstance(payload, dict) else None
-    return services if isinstance(services, list) else []
+    entry = _as_dict(payload)
+    if entry is None:
+        return []
+    return _as_list(entry.get("services")) or []
 
 
-def _item_list(payload: Any, key: str) -> list:
+def _item_list(payload: object, key: str) -> list[object]:
     """Return payload[key] when it is a list, else an empty list."""
-    items = payload.get(key) if isinstance(payload, dict) else None
-    return items if isinstance(items, list) else []
+    entry = _as_dict(payload)
+    if entry is None:
+        return []
+    return _as_list(entry.get(key)) or []
 
 
-def parse_status_page(payload: Any) -> str:
+def parse_status_page(payload: object) -> PageStatus:
     """Return the page status derived from the v2 summary payload.
 
-    "unknown" is returned when no ``status_page`` block can be found.
+    ``PageStatus.UNKNOWN`` is returned when no ``status_page`` block can be
+    found in the payload.
     """
-    page = payload.get("status_page") if isinstance(payload, dict) else None
-    if not isinstance(page, dict):
-        return "unknown"
+    entry = _as_dict(payload)
+    if entry is None:
+        return PageStatus.UNKNOWN
+    page = _as_dict(entry.get("status_page"))
+    if page is None:
+        return PageStatus.UNKNOWN
     return page_status_from_value(page.get("current_incident_type"))
 
 
-def parse_services(payload: Any) -> tuple[Service, ...]:
+def parse_services(payload: object) -> tuple[Service, ...]:
     """Parse the global (children-less) services of the v2 summary payload."""
     services: list[Service] = []
     for item in _services_list(payload):
-        if not isinstance(item, dict):
+        entry = _as_dict(item)
+        if entry is None:
             continue
-        name = item.get("name")
-        if not name or item.get("children"):
+        name = _as_optional_str(entry.get("name"))
+        if name is None or _as_list(entry.get("children")):
             continue
         services.append(
             Service(
-                id=str(item.get("id") or ""),
-                slug=_slugify(str(name)),
-                name=str(name),
-                status=status_from_value(item.get("current_incident_type")),
+                id=_as_str(entry.get("id")),
+                slug=_slugify(name),
+                name=name,
+                status=status_from_value(entry.get("current_incident_type")),
                 scope="global",
                 containers=(),
             )
@@ -130,100 +171,104 @@ def parse_services(payload: Any) -> tuple[Service, ...]:
     return tuple(services)
 
 
-def parse_zones(payload: Any) -> tuple[Zone, ...]:
+def parse_zones(payload: object) -> tuple[Zone, ...]:
     """Parse zones (services with children) of the v2 summary payload."""
     zones: list[Zone] = []
     for item in _services_list(payload):
-        if not isinstance(item, dict):
+        entry = _as_dict(item)
+        if entry is None:
             continue
-        name = item.get("name")
-        children = item.get("children") or []
-        if not name or not isinstance(children, list) or not children:
+        name = _as_optional_str(entry.get("name"))
+        children = _as_list(entry.get("children"))
+        if name is None or not children:
             continue
         services: list[ZoneService] = []
-        for entry in children:
-            if not isinstance(entry, dict) or not entry.get("name"):
+        for child in children:
+            child_entry = _as_dict(child)
+            if child_entry is None:
+                continue
+            child_name = _as_optional_str(child_entry.get("name"))
+            if child_name is None:
                 continue
             services.append(
                 ZoneService(
-                    slug=_slugify(str(entry.get("name"))),
-                    name=str(entry.get("name")),
-                    status=status_from_value(entry.get("current_incident_type")),
+                    slug=_slugify(child_name),
+                    name=child_name,
+                    status=status_from_value(child_entry.get("current_incident_type")),
                 )
             )
         zones.append(
             Zone(
-                id=str(item.get("id") or ""),
-                slug=_slugify(str(name)),
-                name=str(name),
+                id=_as_str(entry.get("id")),
+                slug=_slugify(name),
+                name=name,
                 services=tuple(services),
             )
         )
     return tuple(zones)
 
 
-def _latest_description(item: dict) -> str:
+def _latest_description(item: dict[str, object]) -> str:
     """Return the latest update description, falling back to description/title."""
-    updates = item.get("updates")
-    if isinstance(updates, list):
+    updates = _as_list(item.get("updates"))
+    if updates is not None:
         for update in reversed(updates):
-            if isinstance(update, dict):
-                body = update.get("description") or update.get("body")
-                if body:
-                    return to_plain_text(str(body))
-    description = item.get("description")
-    if description:
-        return to_plain_text(str(description))
-    return str(item.get("title") or "")
+            update_entry = _as_dict(update)
+            if update_entry is None:
+                continue
+            body = _as_optional_str(update_entry.get("description")) or (
+                _as_optional_str(update_entry.get("body"))
+            )
+            if body is not None:
+                return to_plain_text(body)
+    description = _as_optional_str(item.get("description"))
+    if description is not None:
+        return to_plain_text(description)
+    return _as_str(item.get("title"))
 
 
-def parse_notices(payload: Any) -> tuple[list[Notice], list[Notice]]:
+def _parse_items(
+    payload: object,
+    key: str,
+    notice_type: NoticeType,
+    lifecycle: Lifecycle,
+) -> tuple[Notice, ...]:
+    """Parse one notice array of the payload, skipping unusable entries."""
+    notices: list[Notice] = []
+    for item in _item_list(payload, key):
+        entry = _as_dict(item)
+        if entry is None:
+            continue
+        notice_id = _as_str(entry.get("id"))
+        title = _as_optional_str(entry.get("title"))
+        if not notice_id or title is None:
+            continue
+        notices.append(
+            Notice(
+                id=notice_id,
+                notice_type=notice_type,
+                title=title,
+                status=_as_str(entry.get("status")),
+                severity=_as_optional_str(entry.get("type")),
+                lifecycle=lifecycle,
+                starts_at=_as_optional_str(entry.get("starts_at")),
+                ends_at=_as_optional_str(entry.get("ends_at")),
+                description=_latest_description(entry),
+            )
+        )
+    return tuple(notices)
+
+
+def parse_notices(
+    payload: object,
+) -> tuple[tuple[Notice, ...], tuple[Notice, ...]]:
     """Split the v2 summary payload into active incidents and maintenances.
 
-    Incidents come from the ``incidents`` array (lifecycle "active");
-    maintenances from the ``maintenances`` array (lifecycle "pending").
-    Entries without id or title are skipped.
+    Incidents come from the ``incidents`` array (lifecycle ACTIVE);
+    maintenances from the ``maintenances`` array (lifecycle PENDING).
+    Entries without a usable id or title are skipped.
     """
-    incidents: list[Notice] = []
-    for item in _item_list(payload, "incidents"):
-        if not isinstance(item, dict):
-            continue
-        notice_id = item.get("id")
-        title = item.get("title")
-        if not notice_id or not title:
-            continue
-        incidents.append(
-            Notice(
-                id=str(notice_id),
-                notice_type="incident",
-                title=str(title),
-                status=str(item.get("status") or ""),
-                severity=item.get("type"),
-                lifecycle="active",
-                starts_at=item.get("starts_at"),
-                ends_at=item.get("ends_at"),
-                description=_latest_description(item),
-            )
-        )
-    maintenances: list[Notice] = []
-    for item in _item_list(payload, "maintenances"):
-        if not isinstance(item, dict):
-            continue
-        notice_id = item.get("id")
-        title = item.get("title")
-        if not notice_id or not title:
-            continue
-        maintenances.append(
-            Notice(
-                id=str(notice_id),
-                notice_type="maintenance",
-                title=str(title),
-                status=str(item.get("status") or ""),
-                severity=item.get("type"),
-                lifecycle="pending",
-                starts_at=item.get("starts_at"),
-                ends_at=item.get("ends_at"),
-                description=_latest_description(item),
-            )
-        )
-    return incidents, maintenances
+    return (
+        _parse_items(payload, "incidents", NoticeType.INCIDENT, Lifecycle.ACTIVE),
+        _parse_items(payload, "maintenances", NoticeType.MAINTENANCE, Lifecycle.PENDING),
+    )

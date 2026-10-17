@@ -1,5 +1,7 @@
 """Tests for lib.statuspal_parser (TDD) - public StatusPal API v2 shape."""
-from lib.models import Status
+from __future__ import annotations
+
+from lib.models import Notice, Status
 from lib.statuspal_parser import (
     page_status_from_value,
     parse_notices,
@@ -11,12 +13,12 @@ from lib.statuspal_parser import (
 )
 
 
-def test_parse_status_page(summary_payload):
+def test_parse_status_page(summary_payload: dict[str, object]) -> None:
     assert parse_status_page(summary_payload) == "degraded"
 
 
-def test_parse_status_page_mappings():
-    def payload(value):
+def test_parse_status_page_mappings() -> None:
+    def payload(value: object) -> dict[str, object]:
         return {"status_page": {"name": "Exoscale", "current_incident_type": value}}
 
     assert parse_status_page(payload(None)) == "operational"
@@ -29,7 +31,7 @@ def test_parse_status_page_mappings():
     assert parse_status_page({}) == "unknown"
 
 
-def test_page_status_from_value():
+def test_page_status_from_value() -> None:
     assert page_status_from_value(None) == "operational"
     assert page_status_from_value("") == "operational"
     assert page_status_from_value("none") == "operational"
@@ -38,7 +40,7 @@ def test_page_status_from_value():
     assert page_status_from_value("maintenance") == "unknown"
 
 
-def test_parse_services(summary_payload):
+def test_parse_services(summary_payload: dict[str, object]) -> None:
     services = parse_services(summary_payload)
     # only children-less (global) services, zones excluded
     assert len(services) == 4
@@ -51,8 +53,8 @@ def test_parse_services(summary_payload):
     assert billing.status == Status.MINOR
 
 
-def test_parse_services_skips_malformed():
-    payload = {"services": [
+def test_parse_services_skips_malformed() -> None:
+    payload: dict[str, object] = {"services": [
         "not-a-dict",
         {"id": 1, "current_incident_type": "ok"},  # missing name -> skipped
         {"id": 2, "name": "A Zone", "children": [{"name": "Child"}]},  # zone, not global
@@ -64,7 +66,7 @@ def test_parse_services_skips_malformed():
     assert services[0].status == Status.UNKNOWN
 
 
-def test_status_from_value():
+def test_status_from_value() -> None:
     assert status_from_value("ok") == Status.OK
     assert status_from_value("none") == Status.OK
     assert status_from_value("CRITICAL") == Status.CRITICAL
@@ -74,7 +76,7 @@ def test_status_from_value():
     assert status_from_value("bogus") == Status.UNKNOWN
 
 
-def test_parse_zones(summary_payload):
+def test_parse_zones(summary_payload: dict[str, object]) -> None:
     zones = parse_zones(summary_payload)
     assert len(zones) == 3
     dk2 = next(z for z in zones if z.slug == "ch-dk-2")
@@ -88,13 +90,13 @@ def test_parse_zones(summary_payload):
     assert compute.status == Status.MAJOR
 
 
-def test_parse_zones_skips_malformed():
+def test_parse_zones_skips_malformed() -> None:
     assert parse_zones({"services": [None, {"name": "NoChildren"}]}) == ()
     assert parse_zones({}) == ()
     assert parse_zones({"services": [{"name": "Z", "children": "oops"}]}) == ()
 
 
-def test_parse_notices(summary_payload):
+def test_parse_notices(summary_payload: dict[str, object]) -> None:
     incidents, maintenances = parse_notices(summary_payload)
     assert [i.title for i in incidents] == ["Compute outage in CH-DK-2"]
     assert incidents[0].notice_type == "incident"
@@ -109,8 +111,8 @@ def test_parse_notices(summary_payload):
     assert all(m.lifecycle == "pending" for m in maintenances)
 
 
-def test_parse_notices_description_fallbacks():
-    payload = {
+def test_parse_notices_description_fallbacks() -> None:
+    payload: dict[str, object] = {
         "incidents": [{"id": 1, "title": "Only a title"}],
         "maintenances": [
             {"id": 2, "title": "With description", "description": "<p>The body</p>"},
@@ -122,13 +124,21 @@ def test_parse_notices_description_fallbacks():
     assert maintenances[0].severity is None
 
 
-def test_parse_notices_missing_data():
-    assert parse_notices({}) == ([], [])
-    assert parse_notices({"incidents": None, "maintenances": "oops"}) == ([], [])
-    assert parse_notices({"incidents": [{"id": 1}, {"title": "NoId"}]}) == ([], [])
+def test_parse_notices_missing_data() -> None:
+    assert parse_notices({}) == ((), ())
+    assert parse_notices({"incidents": None, "maintenances": "oops"}) == ((), ())
+    assert parse_notices({"incidents": [{"id": 1}, {"title": "NoId"}]}) == ((), ())
 
 
-def test_to_plain_text():
+def test_parse_notices_returns_immutable_tuples() -> None:
+    incidents, maintenances = parse_notices({"incidents": [], "maintenances": []})
+    assert isinstance(incidents, tuple)
+    assert isinstance(maintenances, tuple)
+    assert (incidents, maintenances) == ((), ())
+    assert all(isinstance(n, Notice) for n in incidents + maintenances)
+
+
+def test_to_plain_text() -> None:
     assert to_plain_text("<p>hello <b>world</b></p>") == "hello world"
     assert to_plain_text("a  b\n\tc") == "a b c"
     assert to_plain_text(None) == ""

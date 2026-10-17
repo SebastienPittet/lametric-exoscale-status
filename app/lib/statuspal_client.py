@@ -3,12 +3,17 @@
 The status page is public open data: no authentication is required.
 When an API key is configured (STATUSPAL_API_KEY environment variable),
 it is sent as a Bearer token; it must never be logged.
+
+The client depends on a narrow session protocol (``HttpSession``) rather
+than on ``requests.Session`` directly, so it is testable with fakes that
+are type-checked.
 """
 from __future__ import annotations
 
 import logging
 import time
 from datetime import datetime, timezone
+from typing import Protocol
 
 import requests
 
@@ -27,6 +32,32 @@ USER_AGENT = "lametric-exoscale-status/2.0"
 _BACKOFF_BASE_SECONDS = 0.1
 
 
+class HttpResponse(Protocol):
+    """The part of an HTTP response this client uses."""
+
+    def raise_for_status(self) -> None:
+        """Raise on a 4xx/5xx status code."""
+        ...
+
+    def json(self) -> object:
+        """Decode the body as JSON (arbitrary JSON value)."""
+        ...
+
+
+class HttpSession(Protocol):
+    """The part of an HTTP session this client uses."""
+
+    def get(
+        self,
+        url: str,
+        *,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+    ) -> HttpResponse:
+        """Perform a GET request and return the response."""
+        ...
+
+
 class StatusPalError(Exception):
     """Raised when the StatusPal API is unreachable or returns bad data."""
 
@@ -37,11 +68,11 @@ class StatusPalClient:
     def __init__(
         self,
         config: AppConfig,
-        session: requests.Session | None = None,
+        session: HttpSession | None = None,
         max_retries: int = 2,
     ) -> None:
         self._config = config
-        self._session = session if session is not None else requests.Session()
+        self._session: HttpSession = session if session is not None else requests.Session()
         self._max_retries = max_retries
 
     def _headers(self) -> dict[str, str]:
@@ -56,7 +87,7 @@ class StatusPalClient:
             headers["Authorization"] = f"Bearer {api_key}"
         return headers
 
-    def _get(self, url: str, **kwargs) -> dict:
+    def _get(self, url: str) -> dict[str, object]:
         """GET a JSON object payload, retrying with a short backoff.
 
         Raises StatusPalError after the final failed attempt.
@@ -69,10 +100,9 @@ class StatusPalClient:
                     url,
                     headers=self._headers(),
                     timeout=self._config.request_timeout_seconds,
-                    **kwargs,
                 )
                 response.raise_for_status()
-                payload = response.json()
+                payload: object = response.json()
             except (requests.RequestException, ValueError) as exc:
                 last_error = exc
                 logger.warning(
@@ -118,8 +148,8 @@ class StatusPalClient:
             page_status=parse_status_page(payload),
             services=parse_services(payload),
             zones=parse_zones(payload),
-            incidents=tuple(incidents),
-            maintenances=tuple(maintenances),
+            incidents=incidents,
+            maintenances=maintenances,
             fetched_at=datetime.now(timezone.utc),
             errors=(),
         )

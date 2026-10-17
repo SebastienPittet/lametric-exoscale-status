@@ -14,12 +14,15 @@ import pytest
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def _fixture(name: str) -> dict:
-    return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+def _fixture(name: str) -> dict[str, object]:
+    payload: dict[str, object] = json.loads(
+        (FIXTURES / name).read_text(encoding="utf-8")
+    )
+    return payload
 
 
 @pytest.fixture()
-def summary_payload() -> dict:
+def summary_payload() -> dict[str, object]:
     return _fixture("summary.json")
 
 

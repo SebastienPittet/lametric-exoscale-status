@@ -1,0 +1,15 @@
+# The Dockerfile only copies app/ and requirements.txt; keep the build
+# context minimal (and local artifacts out of the way).
+.git
+.github
+.gitignore
+.venv
+.mypy_cache
+.pytest_cache
+.ruff_cache
+__pycache__/
+*.pyc
+tests/
+*.md
+Dockerfile
+.dockerignore

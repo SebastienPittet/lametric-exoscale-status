@@ -35,6 +35,18 @@ class NoticeType(str, Enum):
     MAINTENANCE = "maintenance"
 
 
+class NoticeStatus(str, Enum):
+    """Status of a notice, as reported by StatusPal."""
+
+    INVESTIGATING = "investigating"
+    IDENTIFIED = "identified"
+    MONITORING = "monitoring"
+    RESOLVED = "resolved"
+    SCHEDULED = "scheduled"
+    IN_PROGRESS = "in_progress"
+    UNKNOWN = "unknown"
+
+
 class Lifecycle(str, Enum):
     """Lifecycle state of a notice."""
 
@@ -69,14 +81,12 @@ class StatusDataProvider(Protocol):
 
 @dataclass(frozen=True)
 class Service:
-    """A service of the status page (global or per-container scope)."""
+    """A global (top-level, children-less) service of the status page."""
 
     id: str
     slug: str
     name: str
     status: Status
-    scope: str
-    containers: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -110,7 +120,7 @@ class Notice:
     id: str
     notice_type: NoticeType
     title: str
-    status: str
+    status: NoticeStatus
     severity: str | None
     lifecycle: Lifecycle
     starts_at: str | None
@@ -128,4 +138,3 @@ class StatusData:
     incidents: tuple[Notice, ...]
     maintenances: tuple[Notice, ...]
     fetched_at: datetime | None
-    errors: tuple[str, ...]

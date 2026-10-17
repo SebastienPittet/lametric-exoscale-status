@@ -149,9 +149,10 @@ The image is published to GitHub Container Registry as
 
 ## CI (GitHub Actions)
 
-Three workflows run on push / PR to `reworking_code` and `master`:
+Three workflows:
 
-- **`tests.yml`** — parallel jobs, all using the pinned dependencies:
+- **`tests.yml`** — on push / PR to `master`, parallel jobs, all using
+  the pinned dependencies:
   - `lint`: `ruff check app tests`
   - `typecheck`: `mypy app tests` (strict)
   - `test`: `pytest` on a Python 3.12 / 3.13 / 3.14 matrix

@@ -50,7 +50,6 @@ def data(summary_payload: dict[str, object]) -> StatusData:
         incidents=incidents,
         maintenances=maintenances,
         fetched_at=datetime.now(UTC),
-        errors=(),
     )
 
 

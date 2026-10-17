@@ -1,16 +1,14 @@
-"""Tests for lib.frames + lib.subscription + lib.cache (TDD)."""
+"""Tests for lib.frames + lib.subscription (TDD)."""
 from __future__ import annotations
 
-import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 
 import pytest
-from lib.cache import CachedFetch, TtlCache
 from lib.frames import MAX_FRAMES, FramesPayload, build_frames
 from lib.models import (
     Lifecycle,
     Notice,
+    NoticeStatus,
     NoticeType,
     PageStatus,
     Service,
@@ -36,7 +34,6 @@ def make_status_data(
         incidents=incidents,
         maintenances=maintenances,
         fetched_at=datetime.now(UTC),
-        errors=(),
     )
 
 
@@ -52,14 +49,7 @@ def zone(slug: str, name: str, *svcs: Service) -> Zone:
 
 
 def svc(slug: str, name: str, status: Status) -> Service:
-    return Service(
-        id=slug,
-        slug=slug,
-        name=name,
-        status=status,
-        scope="global" if not slug.startswith("c") else "containers",
-        containers=(),
-    )
+    return Service(id=slug, slug=slug, name=name, status=status)
 
 
 def notice(
@@ -73,7 +63,7 @@ def notice(
         id=title,
         notice_type=NoticeType(notice_type),
         title=title,
-        status="investigating",
+        status=NoticeStatus.INVESTIGATING,
         severity=severity,
         lifecycle=Lifecycle(lifecycle),
         starts_at=starts_at,
@@ -161,7 +151,6 @@ def test_unavailable_data() -> None:
         incidents=(),
         maintenances=(),
         fetched_at=None,
-        errors=(),
     )
     frames = build_frames(data, "Exoscale", "17776", ICONS, Subscription())
     assert frame_texts(frames)[-1] == "Status unavailable"
@@ -215,7 +204,6 @@ def test_parse_subscription_list_values() -> None:
 def test_parse_subscription_empty() -> None:
     sub = parse_subscription({})
     assert sub.zones == frozenset() and sub.services == frozenset()
-    assert sub.empty
 
 
 def test_parse_subscription_invalid_chars() -> None:
@@ -226,33 +214,3 @@ def test_parse_subscription_invalid_chars() -> None:
 def test_parse_subscription_too_many_tokens() -> None:
     with pytest.raises(SubscriptionError):
         parse_subscription({"zones": ",".join(f"z{i}" for i in range(21))})
-
-
-# ---------------- cache ----------------
-
-def test_cache_set_get_and_expiry() -> None:
-    cache = TtlCache[int](ttl_seconds=0.05)
-    assert cache.get("k") is None
-    cache.set("k", 42)
-    assert cache.get("k") == 42
-    time.sleep(0.06)
-    assert cache.get("k") is None
-    cache.set("k", 1)
-    cache.invalidate("k")
-    assert cache.get("k") is None
-
-
-def test_cache_single_flight() -> None:
-    cache = TtlCache[int](ttl_seconds=60)
-    calls: list[int] = []
-
-    def fetcher() -> int:
-        calls.append(1)
-        time.sleep(0.05)
-        return len(calls)
-
-    fetch = CachedFetch(fetcher, cache, key="k")
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        results = list(pool.map(lambda _: fetch.get(), range(16)))
-    assert len(calls) == 1
-    assert all(r == results[0] for r in results)

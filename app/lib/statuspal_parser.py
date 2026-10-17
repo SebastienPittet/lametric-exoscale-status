@@ -20,6 +20,7 @@ import re
 from lib.models import (
     Lifecycle,
     Notice,
+    NoticeStatus,
     NoticeType,
     PageStatus,
     Service,
@@ -51,6 +52,8 @@ _INCIDENT_TYPE_TO_PAGE_STATUS: dict[str, PageStatus] = {
     "minor": PageStatus.DEGRADED,
     "major": PageStatus.UNAVAILABLE,
     "critical": PageStatus.UNAVAILABLE,
+    "maintenance": PageStatus.OPERATIONAL,
+    "scheduled": PageStatus.OPERATIONAL,
 }
 
 
@@ -80,7 +83,9 @@ def page_status_from_value(value: object) -> PageStatus:
     """Map a raw StatusPal v2 incident type to the page status.
 
     ``None``/empty/"none" mean "no incident" -> OPERATIONAL; minor ->
-    DEGRADED; major/critical -> UNAVAILABLE; unknown values -> UNKNOWN.
+    DEGRADED; major/critical -> UNAVAILABLE; maintenance/scheduled ->
+    OPERATIONAL (a page under maintenance is still a healthy page);
+    unknown values -> UNKNOWN.
     """
     if value is None:
         return PageStatus.OPERATIONAL
@@ -88,6 +93,20 @@ def page_status_from_value(value: object) -> PageStatus:
     if key in ("", "none"):
         return PageStatus.OPERATIONAL
     return _INCIDENT_TYPE_TO_PAGE_STATUS.get(key, PageStatus.UNKNOWN)
+
+
+def notice_status_from_value(value: object) -> NoticeStatus:
+    """Map a raw StatusPal v2 notice status to a NoticeStatus.
+
+    Unknown or missing values map to ``NoticeStatus.UNKNOWN``.
+    """
+    if value is None:
+        return NoticeStatus.UNKNOWN
+    key = str(value).strip().lower()
+    try:
+        return NoticeStatus(key)
+    except ValueError:
+        return NoticeStatus.UNKNOWN
 
 
 def _slugify(name: str) -> str:
@@ -164,8 +183,6 @@ def parse_services(payload: object) -> tuple[Service, ...]:
                 slug=_slugify(name),
                 name=name,
                 status=status_from_value(entry.get("current_incident_type")),
-                scope="global",
-                containers=(),
             )
         )
     return tuple(services)
@@ -248,7 +265,7 @@ def _parse_items(
                 id=notice_id,
                 notice_type=notice_type,
                 title=title,
-                status=_as_str(entry.get("status")),
+                status=notice_status_from_value(entry.get("status")),
                 severity=_as_optional_str(entry.get("type")),
                 lifecycle=lifecycle,
                 starts_at=_as_optional_str(entry.get("starts_at")),

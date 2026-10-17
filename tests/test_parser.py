@@ -1,8 +1,9 @@
 """Tests for lib.statuspal_parser (TDD) - public StatusPal API v2 shape."""
 from __future__ import annotations
 
-from lib.models import Notice, Status
+from lib.models import Notice, NoticeStatus, Status
 from lib.statuspal_parser import (
+    notice_status_from_value,
     page_status_from_value,
     parse_notices,
     parse_services,
@@ -37,7 +38,19 @@ def test_page_status_from_value() -> None:
     assert page_status_from_value("none") == "operational"
     assert page_status_from_value("minor") == "degraded"
     assert page_status_from_value("critical") == "unavailable"
-    assert page_status_from_value("maintenance") == "unknown"
+    # a page under maintenance is still a healthy page
+    assert page_status_from_value("maintenance") == "operational"
+    assert page_status_from_value("scheduled") == "operational"
+    assert page_status_from_value("bogus") == "unknown"
+
+
+def test_notice_status_from_value() -> None:
+    assert notice_status_from_value("investigating") == NoticeStatus.INVESTIGATING
+    assert notice_status_from_value("identified") == NoticeStatus.IDENTIFIED
+    assert notice_status_from_value("IN_PROGRESS") == NoticeStatus.IN_PROGRESS
+    assert notice_status_from_value("scheduled") == NoticeStatus.SCHEDULED
+    assert notice_status_from_value(None) is NoticeStatus.UNKNOWN
+    assert notice_status_from_value("bogus") is NoticeStatus.UNKNOWN
 
 
 def test_parse_services(summary_payload: dict[str, object]) -> None:
@@ -45,10 +58,8 @@ def test_parse_services(summary_payload: dict[str, object]) -> None:
     # only children-less (global) services, zones excluded
     assert len(services) == 4
     portal = next(s for s in services if s.name == "Portal")
-    assert portal.scope == "global"
     assert portal.slug == "portal"
     assert portal.status == Status.OK
-    assert portal.containers == ()
     billing = next(s for s in services if s.name == "Billing")
     assert billing.status == Status.MINOR
 
@@ -101,10 +112,15 @@ def test_parse_notices(summary_payload: dict[str, object]) -> None:
     assert [i.title for i in incidents] == ["Compute outage in CH-DK-2"]
     assert incidents[0].notice_type == "incident"
     assert incidents[0].lifecycle == "active"
+    assert incidents[0].status == NoticeStatus.IDENTIFIED
     assert incidents[0].severity == "major"
     assert incidents[0].starts_at == "2026-01-02T10:00:00Z"
     # description comes from the latest update
     assert incidents[0].description == "We have identified the issue."
+    assert {m.status for m in maintenances} == {
+        NoticeStatus.SCHEDULED,
+        NoticeStatus.IN_PROGRESS,
+    }
     assert {m.title for m in maintenances} == {
         "SOS maintenance window", "SKS patching in progress"}
     assert all(m.notice_type == "maintenance" for m in maintenances)
@@ -120,6 +136,7 @@ def test_parse_notices_description_fallbacks() -> None:
     }
     incidents, maintenances = parse_notices(payload)
     assert incidents[0].description == "Only a title"
+    assert incidents[0].status is NoticeStatus.UNKNOWN
     assert maintenances[0].description == "The body"
     assert maintenances[0].severity is None
 

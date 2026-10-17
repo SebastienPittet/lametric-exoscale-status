@@ -41,11 +41,6 @@ class Subscription:
     zones: frozenset[str] = frozenset()
     services: frozenset[str] = frozenset()
 
-    @property
-    def empty(self) -> bool:
-        """True when neither zones nor services are subscribed."""
-        return not self.zones and not self.services
-
 
 def _parse_tokens(raw: object, param: str) -> frozenset[str]:
     if raw is None:

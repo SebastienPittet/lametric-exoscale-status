@@ -59,7 +59,6 @@ def _unavailable_status_data() -> StatusData:
         incidents=(),
         maintenances=(),
         fetched_at=None,
-        errors=("upstream_unavailable",),
     )
 
 
@@ -68,7 +67,7 @@ def _notice_dict(notice: Notice) -> dict[str, object]:
     return {
         "id": notice.id,
         "title": notice.title,
-        "status": notice.status,
+        "status": notice.status.value,
         "severity": notice.severity,
         "lifecycle": notice.lifecycle.value,
         "starts_at": notice.starts_at,
@@ -215,8 +214,6 @@ def create_app(
                         "slug": service.slug,
                         "name": service.name,
                         "status": service.status.value,
-                        "scope": service.scope,
-                        "containers": list(service.containers),
                     }
                     for service in data.services
                 ]

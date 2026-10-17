@@ -36,10 +36,3 @@ scheduled = "7419"
 no-status = "625"
 # Maintenance tool
 tool = "93"
-
-[lametric-country]
-CH = "469"
-DE = "512"
-AT = "2954"
-BG = "20415"
-HG = ""

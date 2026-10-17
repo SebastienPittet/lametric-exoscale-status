@@ -52,12 +52,6 @@ critical = "2715"
 maintenance = "7419"
 unknown = "625"
 tool = "93"
-
-[lametric-country]
-CH = "469"
-DE = "512"
-AT = "2954"
-BG = "20415"
 """,
         encoding="utf-8",
     )

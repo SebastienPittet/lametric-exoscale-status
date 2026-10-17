@@ -142,5 +142,4 @@ class StatusPalClient:
             incidents=incidents,
             maintenances=maintenances,
             fetched_at=datetime.now(UTC),
-            errors=(),
         )

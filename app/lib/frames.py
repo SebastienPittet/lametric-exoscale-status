@@ -98,10 +98,7 @@ def build_frames(
             )
 
     for global_service in data.services:
-        if (
-            global_service.scope != "global"
-            or global_service.status is Status.OK
-        ):
+        if global_service.status is Status.OK:
             continue
         if not allowed(global_service.slug, global_service.name):
             continue

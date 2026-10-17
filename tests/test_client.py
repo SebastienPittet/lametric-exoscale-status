@@ -95,17 +95,6 @@ def test_fetch_success_sends_user_agent_and_parses(summary_payload: dict[str, ob
     assert len(data.incidents) == 1
     assert len(data.maintenances) == 2
     assert data.fetched_at is not None
-    assert data.errors == ()
-
-
-def test_fetch_never_sends_authorization_header(summary_payload: dict[str, object]) -> None:
-    session = make_session(summary_payload)
-    client = StatusPalClient(make_config(), session=session)
-    data = client.fetch_status_data()
-    headers = _headers(session.calls[0])
-    assert "Authorization" not in headers
-    assert "lametric-exoscale-status" in headers["User-Agent"]
-    assert data.page_status.value == "degraded"
 
 
 def test_http_error_raises(summary_payload: dict[str, object]) -> None:

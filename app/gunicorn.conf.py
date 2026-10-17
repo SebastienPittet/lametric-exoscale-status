@@ -7,7 +7,9 @@ bind = "0.0.0.0:6000"
 workers = 2
 threads = 2
 
-timeout = 30
+# Worst-case upstream fetch is ~30 s (3 attempts x 10 s + backoff); the
+# worker timeout must stay above that budget.
+timeout = 45
 graceful_timeout = 10
 keepalive = 5
 

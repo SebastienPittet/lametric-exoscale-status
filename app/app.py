@@ -4,12 +4,11 @@ from __future__ import annotations
 import logging
 
 from flask import Flask, Response, jsonify, request
-
 from lib.cache import CachedFetch, TtlCache
 from lib.configuration import AppConfig, load_config
 from lib.frames import build_frames
 from lib.models import Notice, PageStatus, Status, StatusData, StatusDataProvider
-from lib.security import RateLimiter, SECURITY_HEADERS
+from lib.security import SECURITY_HEADERS, RateLimiter
 from lib.statuspal_client import StatusPalClient, StatusPalError
 from lib.subscription import Subscription, SubscriptionError, parse_subscription
 

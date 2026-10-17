@@ -3,23 +3,23 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from flask import Flask
-from werkzeug.wrappers import Response
-
-from app import create_app
 from lib.configuration import load_config
 from lib.models import StatusData
 from lib.statuspal_client import StatusPalError
 from lib.statuspal_parser import (
     parse_notices,
-    parse_status_page,
     parse_services,
+    parse_status_page,
     parse_zones,
 )
+from werkzeug.wrappers import Response
+
+from app import create_app
 
 
 class FakeClient:
@@ -49,7 +49,7 @@ def data(summary_payload: dict[str, object]) -> StatusData:
         zones=parse_zones(summary_payload),
         incidents=incidents,
         maintenances=maintenances,
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
         errors=(),
     )
 

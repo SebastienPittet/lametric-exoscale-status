@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -6,8 +6,14 @@ on:
   pull_request:
     branches: [ "reworking_code", "master" ]
 
+# Une seule exécution a la fois par branche/commit
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  lint:
+    name: Lint (ruff)
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -15,11 +21,42 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.12"
+        cache: pip
+    - name: Install dev dependencies
+      run: pip install -r requirements-dev.txt
+    - name: ruff check
+      run: ruff check app tests
+
+  typecheck:
+    name: Type-check (mypy strict)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: pip
     - name: Install dependencies
       run: pip install -r requirements.txt -r requirements-dev.txt
-    - name: Lint with ruff
-      run: ruff check app tests
-    - name: Type-check with mypy (strict)
+    - name: mypy app tests
       run: mypy app tests
+
+  test:
+    name: Tests (pytest, Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.12", "3.13", "3.14" ]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+    - name: Install dependencies
+      run: pip install -r requirements.txt -r requirements-dev.txt
     - name: Run pytest
       run: pytest

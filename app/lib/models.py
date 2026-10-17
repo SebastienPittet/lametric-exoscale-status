@@ -1,10 +1,11 @@
 """Domain models for the Exoscale / StatusPal status data."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Iterable, Protocol
+from typing import Protocol
 
 
 class Status(str, Enum):

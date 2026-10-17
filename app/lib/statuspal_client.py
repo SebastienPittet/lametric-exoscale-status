@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Protocol
 
 import requests
@@ -150,6 +150,6 @@ class StatusPalClient:
             zones=parse_zones(payload),
             incidents=incidents,
             maintenances=maintenances,
-            fetched_at=datetime.now(timezone.utc),
+            fetched_at=datetime.now(UTC),
             errors=(),
         )

@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-
 from lib.cache import CachedFetch, TtlCache
 from lib.frames import MAX_FRAMES, FramesPayload, build_frames
 from lib.models import (
@@ -36,7 +35,7 @@ def make_status_data(
         zones=zones,
         incidents=incidents,
         maintenances=maintenances,
-        fetched_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(UTC),
         errors=(),
     )
 

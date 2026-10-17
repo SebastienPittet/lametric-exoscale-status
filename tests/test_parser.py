@@ -5,8 +5,8 @@ from lib.models import Notice, Status
 from lib.statuspal_parser import (
     page_status_from_value,
     parse_notices,
-    parse_status_page,
     parse_services,
+    parse_status_page,
     parse_zones,
     status_from_value,
     to_plain_text,

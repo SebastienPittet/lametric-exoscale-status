@@ -130,6 +130,18 @@ docker run --rm -p 6000:6000 lametric-exoscale-status
 The image listens on port `6000` and performs a `wget` health check against
 `/healthz`.
 
+## CI (GitHub Actions)
+
+Two workflows run on push / PR to `reworking_code` and `master`:
+
+- **`tests.yml`** — parallel jobs, all using the pinned dependencies:
+  - `lint`: `ruff check app tests`
+  - `typecheck`: `mypy app tests` (strict)
+  - `test`: `pytest` on a Python 3.12 / 3.13 / 3.14 matrix
+- **`size-label.yml`** — labels each PR with `size/XS`, `size/S`, `size/M`,
+  `size/L`, `size/XL`, `size/XXL` (line-count based, Kubernetes-style) via
+  [`pascalgn/size-label-action`](https://github.com/pascalgn/size-label-action).
+
 ## Contributing
 
 Pull requests are welcome — tests are the specification, please keep them

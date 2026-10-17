@@ -20,7 +20,8 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE: ghcr.io/${{ github.repository }}
+  # GHCR repository names must be lowercase (the owner is "SebastienPittet").
+  IMAGE: ghcr.io/${{ toLower(github.repository) }}
 
 jobs:
   build:

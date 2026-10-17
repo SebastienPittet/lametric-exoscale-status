@@ -97,6 +97,23 @@ python3 -m venv .venv
 .venv/bin/ruff check app tests
 ```
 
+## Running the app
+
+The application modules use `app/` as their working directory, so start
+gunicorn from inside it:
+
+```sh
+cd app
+../.venv/bin/gunicorn -c gunicorn.conf.py app:app
+```
+
+Then check it:
+
+```sh
+curl http://127.0.0.1:6000/healthz
+curl http://127.0.0.1:6000/api/v1/status
+```
+
 ## Docker
 
 ```sh

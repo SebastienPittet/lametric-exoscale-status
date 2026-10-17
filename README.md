@@ -69,8 +69,8 @@ parameter return `400`.
 ## Configuration
 
 Static settings live in `app/config.toml`: StatusPal base URL and subdomain,
-request timeout, cache TTL, rate limit, LAMETRIC app name/logo and the status
-icons.
+request timeout, cache TTL, rate limit, log level, LAMETRIC app name/logo
+and the status icons.
 
 The StatusPal API (v2) is public open data: **no API key is used**. The
 client sends no credentials at all — not even when the environment could

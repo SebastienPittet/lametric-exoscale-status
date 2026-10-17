@@ -14,6 +14,11 @@ from pathlib import Path
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.toml"
 
+#: Log levels accepted in [logging].level.
+LOG_LEVELS: frozenset[str] = frozenset(
+    {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+)
+
 #: Legacy aliases accepted in [status-logo], mapped to canonical keys.
 ICON_ALIASES: Mapping[str, str] = {
     "minor": "down-minor",
@@ -50,6 +55,7 @@ class AppConfig:
     app_logo: str
     status_icons: dict[str, str]
     rate_limit_per_minute: int
+    log_level: str
 
 
 def _as_table(raw: Mapping[str, object], name: str) -> dict[str, object]:
@@ -128,6 +134,14 @@ def load_config(path: str | Path | None = None) -> AppConfig:
 
     status_icons = _normalize_icons(_as_table(raw, "status-logo"))
 
+    logging_table = _optional_table(raw, "logging")
+    level = str(logging_table.get("level", "INFO")).strip().upper()
+    if level not in LOG_LEVELS:
+        raise ConfigurationError(
+            f"invalid [logging].level: {level!r} "
+            f"(expected one of {sorted(LOG_LEVELS)})"
+        )
+
     return AppConfig(
         statuspal_base_url=base_url.rstrip("/"),
         status_page_subdomain=subdomain,
@@ -146,4 +160,5 @@ def load_config(path: str | Path | None = None) -> AppConfig:
                 "[security]",
             )
         ),
+        log_level=level,
     )

@@ -97,3 +97,15 @@ def test_defaults_when_optional_missing(tmp_path: Path) -> None:
     assert cfg.request_timeout_seconds == 10.0
     assert cfg.cache_ttl_seconds == 30.0
     assert cfg.rate_limit_per_minute == 120
+
+
+
+def test_log_level(tmp_path: Path) -> None:
+    p = tmp_path / "config.toml"
+    p.write_text(FULL_TOML, encoding="utf-8")
+    assert load_config(p).log_level == "INFO"
+    p.write_text(FULL_TOML + '\n[logging]\nlevel = "debug"\n', encoding="utf-8")
+    assert load_config(p).log_level == "DEBUG"
+    p.write_text(FULL_TOML + '\n[logging]\nlevel = "verbose"\n', encoding="utf-8")
+    with pytest.raises(ConfigurationError):
+        load_config(p)

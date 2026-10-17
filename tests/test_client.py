@@ -56,6 +56,7 @@ def make_config() -> AppConfig:
         status_page_subdomain="exoscalestatus",
         request_timeout_seconds=1.0,
         cache_ttl_seconds=1.0,
+        log_level="INFO",
         app_name="Exoscale",
         app_logo="17776",
         status_icons={"up": "1", "down-minor": "2", "down-major": "3",

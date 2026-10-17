@@ -32,11 +32,20 @@ _ENDPOINTS: list[str] = [
 JsonResult = Response | tuple[Response, int]
 
 
-def _ensure_logging() -> None:
+_LOG_LEVELS: dict[str, int] = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL,
+}
+
+
+def _ensure_logging(level: str) -> None:
     """Install a basic logging setup when none is configured yet."""
     if not logging.getLogger().handlers:
         logging.basicConfig(
-            level=logging.INFO,
+            level=_LOG_LEVELS.get(level, logging.INFO),
             format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         )
 
@@ -77,7 +86,7 @@ def create_app(
         config = load_config()
     if client is None:
         client = StatusPalClient(config)
-    _ensure_logging()
+    _ensure_logging(config.log_level)
 
     app = Flask(__name__)
     limiter = RateLimiter(config.rate_limit_per_minute)

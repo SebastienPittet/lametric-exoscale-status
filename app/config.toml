@@ -14,6 +14,9 @@ ttl_seconds = 30
 [security]
 rate_limit_per_minute = 120
 
+[logging]
+level = "INFO"
+
 [lametric-app]
 name = "Exoscale"
 logo = "17776"

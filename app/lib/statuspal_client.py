@@ -1,8 +1,7 @@
 """HTTP client for the public StatusPal API (v2).
 
-The status page is public open data: no authentication is required.
-When an API key is configured (STATUSPAL_API_KEY environment variable),
-it is sent as a Bearer token; it must never be logged.
+The status page is public open data: no authentication is required and
+no credentials are ever sent.
 
 The client depends on a narrow session protocol (``HttpSession``) rather
 than on ``requests.Session`` directly, so it is testable with fakes that
@@ -29,6 +28,10 @@ from lib.statuspal_parser import (
 logger = logging.getLogger(__name__)
 
 USER_AGENT = "lametric-exoscale-status/2.0"
+
+#: Headers sent on every request: identifies this client to the upstream API.
+HEADERS: dict[str, str] = {"User-Agent": USER_AGENT}
+
 _BACKOFF_BASE_SECONDS = 0.1
 
 
@@ -75,18 +78,6 @@ class StatusPalClient:
         self._session: HttpSession = session if session is not None else requests.Session()
         self._max_retries = max_retries
 
-    def _headers(self) -> dict[str, str]:
-        """Build the request headers.
-
-        The Authorization header is only added when an API key is set;
-        the public API works without it.
-        """
-        headers = {"User-Agent": USER_AGENT}
-        api_key = self._config.statuspal_api_key
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-        return headers
-
     def _get(self, url: str) -> dict[str, object]:
         """GET a JSON object payload, retrying with a short backoff.
 
@@ -98,7 +89,7 @@ class StatusPalClient:
             try:
                 response = self._session.get(
                     url,
-                    headers=self._headers(),
+                    headers=HEADERS,
                     timeout=self._config.request_timeout_seconds,
                 )
                 response.raise_for_status()

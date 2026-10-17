@@ -15,13 +15,13 @@ on your device — it just works.
 ```
 app/
 ├── app.py                  # Flask application factory + routes
-├── config.toml             # static configuration (never contains the API key)
+├── config.toml             # static configuration
 ├── gunicorn.conf.py        # hardened gunicorn settings
 └── lib/
     ├── models.py           # domain models (Status, Service, Zone, Notice, StatusData)
-    ├── configuration.py    # TOML config loading + optional STATUSPAL_API_KEY from the env
+    ├── configuration.py    # TOML config loading (typed, validated)
     ├── statuspal_parser.py # StatusPal v2 public summary payload -> domain models
-    ├── statuspal_client.py # HTTP client with retry/backoff (public API, optional Bearer key)
+    ├── statuspal_client.py # HTTP client with retry/backoff (public open-data API)
     ├── cache.py            # TtlCache + single-flight CachedFetch
     ├── subscription.py     # parsing of the ?zones= / ?services= parameters
     ├── security.py         # security headers + sliding-window rate limiter
@@ -72,17 +72,16 @@ Static settings live in `app/config.toml`: StatusPal base URL and subdomain,
 request timeout, cache TTL, rate limit, LAMETRIC app name/logo and the status
 icons.
 
-The StatusPal API (v2) is public open data: **no API key is required**. If you
-set the optional `STATUSPAL_API_KEY` environment variable, the key is sent as
-a Bearer token. The key is **never stored in the repository** and the
-configuration loads fine without it.
+The StatusPal API (v2) is public open data: **no API key is used**. The
+client sends no credentials at all — not even when the environment could
+provide one — and the configuration model has no key field to fill.
 
 ## Security
 
 - Sliding-window rate limit per client IP (default 120 req/min, `429` when exceeded)
 - 30 s response cache, single-flight upstream fetch (no request storms)
 - Security headers on every response (`nosniff`, `DENY`, `no-referrer`, `no-store`)
-- Optional API key only from the environment, never logged, never in config files
+- Public API only: no credentials anywhere (environment, config, repository)
 - Hardened gunicorn (request line/field size and count limits, worker recycling)
 - Docker image runs as a non-root user
 - JSON-only error handlers (no traceback leakage)

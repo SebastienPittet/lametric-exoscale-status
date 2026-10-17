@@ -1,23 +1,18 @@
 """Configuration loading for the LAMETRIC Exoscale status API.
 
-The StatusPal API v2 is public: no API key is required. When the optional
-STATUSPAL_API_KEY environment variable is set, the key is sent to StatusPal
-as a Bearer token; it must never be stored in the configuration file.
+The StatusPal API v2 is public open data: no API key is used.
 
 TOML values arrive typed as ``object``; every value is validated
 (``isinstance``) before being stored in the frozen ``AppConfig``.
 """
 from __future__ import annotations
 
-import os
 import tomllib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.toml"
-
-API_KEY_ENV_VAR = "STATUSPAL_API_KEY"
 
 #: Legacy aliases accepted in [status-logo], mapped to canonical keys.
 ICON_ALIASES: Mapping[str, str] = {
@@ -49,7 +44,6 @@ class AppConfig:
 
     statuspal_base_url: str
     status_page_subdomain: str
-    statuspal_api_key: str
     request_timeout_seconds: float
     cache_ttl_seconds: float
     app_name: str
@@ -111,8 +105,6 @@ def load_config(path: str | Path | None = None) -> AppConfig:
 
     Raises ConfigurationError when the file is missing or invalid, or when
     a required value (base_url, subdomain, app name/logo, icons) is absent.
-    The StatusPal API key is optional: it defaults to "" when the
-    STATUSPAL_API_KEY environment variable is not set.
     """
     config_path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
     try:
@@ -136,13 +128,9 @@ def load_config(path: str | Path | None = None) -> AppConfig:
 
     status_icons = _normalize_icons(_as_table(raw, "status-logo"))
 
-    # The public API v2 works without a key; only use it when configured.
-    api_key = os.environ.get(API_KEY_ENV_VAR, "").strip()
-
     return AppConfig(
         statuspal_base_url=base_url.rstrip("/"),
         status_page_subdomain=subdomain,
-        statuspal_api_key=api_key,
         request_timeout_seconds=timeout,
         cache_ttl_seconds=_require_number(
             _optional_table(raw, "caching"), "ttl_seconds", 30.0, "[caching]"

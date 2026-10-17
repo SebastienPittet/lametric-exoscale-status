@@ -1,7 +1,5 @@
 # Static configuration for lametric-exoscale-status.
-# The StatusPal API v2 is public (open data): no API key is required.
-# If the optional STATUSPAL_API_KEY environment variable is set, the key is
-# sent as a Bearer token. The key is NEVER stored in this file.
+# The StatusPal API v2 is public open data: no API key exists or is used.
 
 [statuspal]
 base_url = "https://statuspal.eu/api/v2"
@@ -39,3 +37,4 @@ CH = "469"
 DE = "512"
 AT = "2954"
 BG = "20415"
+HG = ""

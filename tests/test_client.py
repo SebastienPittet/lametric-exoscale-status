@@ -50,14 +50,10 @@ class FakeSession:
         return self.responses.get(key, FakeResponse({"services": []}))
 
 
-def make_config(
-    statuspal_api_key: str = "secret",
-    statuspal_base_url: str = "https://statuspal.eu/api/v2",
-) -> AppConfig:
+def make_config() -> AppConfig:
     return AppConfig(
-        statuspal_base_url=statuspal_base_url,
+        statuspal_base_url="https://statuspal.eu/api/v2",
         status_page_subdomain="exoscalestatus",
-        statuspal_api_key=statuspal_api_key,
         request_timeout_seconds=1.0,
         cache_ttl_seconds=1.0,
         app_name="Exoscale",
@@ -80,7 +76,7 @@ def _headers(call: tuple[str, dict[str, object]]) -> dict[str, str]:
     return {str(key): str(value) for key, value in headers.items()}
 
 
-def test_fetch_success_sends_auth_and_parses(summary_payload: dict[str, object]) -> None:
+def test_fetch_success_sends_user_agent_and_parses(summary_payload: dict[str, object]) -> None:
     session = make_session(summary_payload)
     client = StatusPalClient(make_config(), session=session)
     data = client.fetch_status_data()
@@ -89,7 +85,7 @@ def test_fetch_success_sends_auth_and_parses(summary_payload: dict[str, object])
     url, kwargs = session.calls[0]
     assert url.endswith("/status_pages/exoscalestatus/summary")
     headers = _headers(session.calls[0])
-    assert headers["Authorization"] == "Bearer secret"
+    assert "Authorization" not in headers
     assert "lametric-exoscale-status" in headers["User-Agent"]
     assert kwargs["timeout"] == 1.0
     assert data.page_status.value == "degraded"
@@ -101,9 +97,9 @@ def test_fetch_success_sends_auth_and_parses(summary_payload: dict[str, object])
     assert data.errors == ()
 
 
-def test_fetch_without_key_omits_authorization_header(summary_payload: dict[str, object]) -> None:
+def test_fetch_never_sends_authorization_header(summary_payload: dict[str, object]) -> None:
     session = make_session(summary_payload)
-    client = StatusPalClient(make_config(statuspal_api_key=""), session=session)
+    client = StatusPalClient(make_config(), session=session)
     data = client.fetch_status_data()
     headers = _headers(session.calls[0])
     assert "Authorization" not in headers

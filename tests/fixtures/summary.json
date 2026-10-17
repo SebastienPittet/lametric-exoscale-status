@@ -1,0 +1,118 @@
+{
+  "services": [
+    {
+      "id": 10327,
+      "name": "CH-GVA-2",
+      "description": null,
+      "current_incident_type": null,
+      "children": [
+        {"id": 10346, "name": "API", "description": null, "children": [], "current_incident_type": "minor"},
+        {"id": 22200, "name": "Block Storage", "description": null, "children": [], "current_incident_type": null},
+        {"id": 10374, "name": "Object Storage SOS", "description": null, "children": [], "current_incident_type": null},
+        {"id": 10367, "name": "Network Load Balancer NLB", "description": null, "children": [], "current_incident_type": null}
+      ]
+    },
+    {
+      "id": 10331,
+      "name": "CH-DK-2",
+      "description": null,
+      "current_incident_type": null,
+      "children": [
+        {"id": 10347, "name": "API", "description": null, "children": [], "current_incident_type": null},
+        {"id": 10340, "name": "Compute", "description": null, "children": [], "current_incident_type": "major"}
+      ]
+    },
+    {
+      "id": 10333,
+      "name": "DE-FRA-1",
+      "description": null,
+      "current_incident_type": null,
+      "children": [
+        {"id": 10362, "name": "Managed Kubernetes SKS", "description": null, "children": [], "current_incident_type": "critical"},
+        {"id": 10376, "name": "Object Storage SOS", "description": null, "children": [], "current_incident_type": "maintenance"},
+        {"id": 10369, "name": "Network Load Balancer NLB", "description": null, "children": [], "current_incident_type": null}
+      ]
+    },
+    {
+      "id": 10338,
+      "name": "Portal",
+      "description": "Management portal",
+      "children": [],
+      "current_incident_type": null
+    },
+    {
+      "id": 10337,
+      "name": "DNS",
+      "description": null,
+      "children": [],
+      "current_incident_type": null
+    },
+    {
+      "id": 21305,
+      "name": "Billing",
+      "description": null,
+      "children": [],
+      "current_incident_type": "minor"
+    },
+    {
+      "id": 21304,
+      "name": "Support Hotline",
+      "description": null,
+      "children": [],
+      "current_incident_type": null
+    }
+  ],
+  "status_page": {
+    "name": "Exoscale",
+    "url": "exoscale.com",
+    "subdomain": "exoscalestatus",
+    "time_zone": "Europe/Zurich",
+    "current_incident_type": "minor",
+    "default_lang": "en"
+  },
+  "incidents": [
+    {
+      "id": 50001,
+      "type": "major",
+      "title": "Compute outage in CH-DK-2",
+      "description": "Compute is experiencing an outage in CH-DK-2.",
+      "status": "identified",
+      "starts_at": "2026-01-02T10:00:00Z",
+      "ends_at": null,
+      "services": [{"id": 10340, "name": "Compute"}],
+      "updates": [
+        {"id": 51001, "status": "investigating", "description": "We are investigating a Compute outage.", "created_at": "2026-01-02T10:05:00Z"},
+        {"id": 51002, "status": "identified", "description": "We have identified the issue.", "created_at": "2026-01-02T10:20:00Z"}
+      ],
+      "created_at": "2026-01-02T10:00:00Z",
+      "updated_at": "2026-01-02T10:20:00Z"
+    }
+  ],
+  "info_notices": [],
+  "maintenances": [
+    {
+      "id": 60001,
+      "type": null,
+      "title": "SOS maintenance window",
+      "description": "Scheduled maintenance for Object Storage SOS.",
+      "status": "scheduled",
+      "starts_at": "2026-01-05T02:00:00Z",
+      "ends_at": "2026-01-05T04:00:00Z",
+      "updates": []
+    },
+    {
+      "id": 60002,
+      "type": null,
+      "title": "SKS patching in progress",
+      "description": "Patching for Managed Kubernetes SKS.",
+      "status": "in_progress",
+      "starts_at": "2026-01-02T01:00:00Z",
+      "ends_at": "2026-01-02T03:00:00Z",
+      "updates": [
+        {"id": 61001, "status": "in_progress", "description": "Patching in progress, expect brief interruptions.", "created_at": "2026-01-02T01:10:00Z"}
+      ]
+    }
+  ],
+  "upcoming_maintenances": [],
+  "current_status_type": null
+}

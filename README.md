@@ -126,12 +126,30 @@ docker build -t lametric-exoscale-status .
 docker run --rm -p 6000:6000 lametric-exoscale-status
 ```
 
-The image listens on port `6000` and performs a `wget` health check against
-`/healthz`.
+The image is built on `python:3.14-alpine` (single stage, ~70 MB), runs as
+a non-root user, listens on port `6000` and performs a `wget` health check
+against `/healthz`. All runtime dependencies ship as musllinux wheels, so
+no build toolchain is needed inside the image — a multi-stage build would
+not make it lighter.
+
+### Keeping the image up to date
+
+- **Dependabot** (`.github/dependabot.yml`) opens PRs for:
+  - `pip` — newer versions in `requirements.txt` / `requirements-dev.txt` (daily)
+  - `docker` — newer base image tags in the Dockerfile (e.g. `python:3.15-alpine`)
+  - `github-actions` — newer versions of the workflow actions
+- **`docker.yml`** rebuilds the image nightly (03:17 UTC). Because
+  `python:3.14-alpine` is a *moving* tag, the nightly build picks up the
+  latest 3.14.x security/base updates even when Dependabot has nothing
+  to propose.
+
+The image is published to GitHub Container Registry as
+`ghcr.io/<owner>/lametric-exoscale-status` with `latest` and
+`sha-<commit>` tags (multi-arch: `amd64` + `arm64`).
 
 ## CI (GitHub Actions)
 
-Two workflows run on push / PR to `reworking_code` and `master`:
+Three workflows run on push / PR to `reworking_code` and `master`:
 
 - **`tests.yml`** — parallel jobs, all using the pinned dependencies:
   - `lint`: `ruff check app tests`
@@ -139,7 +157,11 @@ Two workflows run on push / PR to `reworking_code` and `master`:
   - `test`: `pytest` on a Python 3.12 / 3.13 / 3.14 matrix
 - **`size-label.yml`** — labels each PR with `size/XS`, `size/S`, `size/M`,
   `size/L`, `size/XL`, `size/XXL` (line-count based, Kubernetes-style) via
-  [`pascalgn/size-label-action`](https://github.com/pascalgn/size-label-action).
+  [`pascalgn/size-label-action`](https://github.com/pascalgn/size-label-action)
+- **`docker.yml`** — builds the Docker image (multi-arch) on PRs (verify
+  only), and on `master` pushes it to GHCR; also runs a nightly rebuild
+  so the image tracks the latest `python:3.14-alpine` base (see
+  [Keeping the image up to date](#keeping-the-image-up-to-date)).
 
 ## Contributing
 

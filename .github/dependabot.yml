@@ -1,16 +1,23 @@
 version: 2
 updates:
-  # Mises à jour des dépendances Python (pip)
+  # Python dependencies (requirements.txt / requirements-dev.txt)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "monthly"
-      time: "04:00"
-    open-pull-requests-limit: 10
+      interval: "daily"
+    groups:
+      python:
+        patterns:
+          - "*"
 
-  # Mises à jour des GitHub Actions
-  - package-ecosystem: "github-actions"
+  # Base image tag in the Dockerfile (python:3.14-alpine -> 3.15-alpine, ...)
+  - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 5
+      interval: "weekly"
+
+  # GitHub Actions used by the workflows
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"

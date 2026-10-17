@@ -1,0 +1,23 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "reworking_code", "master" ]
+  pull_request:
+    branches: [ "reworking_code", "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install dependencies
+      run: pip install -r requirements.txt -r requirements-dev.txt
+    - name: Lint with ruff
+      run: ruff check app tests
+    - name: Run pytest
+      run: pytest

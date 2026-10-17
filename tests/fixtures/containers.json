@@ -1,0 +1,39 @@
+{
+  "data": [
+    {
+      "id": "c1",
+      "slug": "ch-gva-2",
+      "name": "CH-GVA-2",
+      "services": [
+        {"slug": "api", "name": "API", "status": "minor"},
+        {"slug": "sos", "name": "Object Storage SOS", "status": "maintenance"},
+        {"slug": "nlb", "name": "Network Load Balancer NLB", "status": "ok"}
+      ],
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "c2",
+      "slug": "ch-dk-2",
+      "name": "CH-DK-2",
+      "services": [
+        {"slug": "api", "name": "API", "status": "ok"},
+        {"slug": "compute", "name": "Compute", "status": "major"}
+      ],
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": "c3",
+      "slug": "de-fra-1",
+      "name": "DE-FRA-1",
+      "services": [
+        {"slug": "skl", "name": "Managed Kubernetes SKS", "status": "critical"},
+        {"slug": "sos", "name": "Object Storage SOS", "status": "maintenance"},
+        {"slug": "nlb", "name": "Network Load Balancer NLB", "status": "ok"}
+      ],
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-02T00:00:00Z"
+    }
+  ]
+}

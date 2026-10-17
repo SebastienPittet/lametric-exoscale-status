@@ -1,0 +1,25 @@
+name: Generate SBOM CycloneDX
+
+on:
+  push:
+    # Production branch (was "main" — never fired on this repo).
+    branches: [ "master" ]
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v7
+
+      - name: Generate the SBOM CycloneDX
+        uses: anchore/sbom-action@v0
+        with:
+          format: 'cyclonedx-json'
+          output-file: 'bom.cyclonedx.json'
+
+      - name: Archive the SBOM as an artefact
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-cyclonedx
+          path: bom.cyclonedx.json

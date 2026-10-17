@@ -17,6 +17,12 @@ _MAX_TRACKED_KEYS = 10000
 class RateLimiter:
     """A thread-safe sliding-window rate limiter, keyed by client.
 
+    Deliberately self-contained (no flask-limiter dependency): the app
+    needs exactly one global per-client limit and zero extra
+    dependencies. Note: with multiple gunicorn workers the limit applies
+    per worker; raise rate_limit_per_minute accordingly or move the
+    limit to the edge (reverse proxy) if a strict global cap matters.
+
     Memory is bounded: when more than _MAX_TRACKED_KEYS clients are tracked,
     the oldest one is dropped.
     """

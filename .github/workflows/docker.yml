@@ -21,7 +21,7 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   # GHCR repository names must be lowercase (the owner is "SebastienPittet").
-  IMAGE: ghcr.io/${{ toLower(github.repository) }}
+  IMAGE: ghcr.io/sebastienpittet/lametric-exoscale-status
 
 jobs:
   build:

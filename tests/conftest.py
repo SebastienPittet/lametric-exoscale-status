@@ -1,7 +1,8 @@
 """Shared fixtures for the test-suite.
 
-All fixtures are built from realistic payloads that follow the
-StatusPal "next" API (v1) OpenAPI specification.
+All fixtures follow the public StatusPal API v2 (statuspal.eu/api/v2)
+summary shape: a single payload with services (zones with children, plus
+global services), incidents, maintenances and the status_page block.
 """
 from __future__ import annotations
 
@@ -18,23 +19,8 @@ def _fixture(name: str) -> dict:
 
 
 @pytest.fixture()
-def status_page_payload() -> dict:
-    return _fixture("status_page.json")
-
-
-@pytest.fixture()
-def services_payload() -> dict:
-    return _fixture("services.json")
-
-
-@pytest.fixture()
-def containers_payload() -> dict:
-    return _fixture("containers.json")
-
-
-@pytest.fixture()
-def notices_payload() -> dict:
-    return _fixture("notices.json")
+def summary_payload() -> dict:
+    return _fixture("summary.json")
 
 
 @pytest.fixture()
@@ -44,7 +30,7 @@ def valid_config_toml(tmp_path: Path) -> Path:
     path.write_text(
         """
 [statuspal]
-base_url = "https://next.statuspal.io/api/v1"
+base_url = "https://statuspal.eu/api/v2"
 status_page_subdomain = "exoscalestatus"
 request_timeout_seconds = 10
 

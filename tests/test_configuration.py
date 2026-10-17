@@ -5,7 +5,7 @@ from lib.configuration import ConfigurationError, load_config
 
 FULL_TOML = """
 [statuspal]
-base_url = "https://next.statuspal.io/api/v1"
+base_url = "https://statuspal.eu/api/v2"
 status_page_subdomain = "exoscalestatus"
 request_timeout_seconds = 10
 
@@ -38,7 +38,7 @@ def write(tmp_path, drop_key=None):
 def test_loads_valid_config(valid_config_toml, monkeypatch):
     monkeypatch.setenv("STATUSPAL_API_KEY", "test-key")
     cfg = load_config(valid_config_toml)
-    assert cfg.statuspal_base_url == "https://next.statuspal.io/api/v1"
+    assert cfg.statuspal_base_url == "https://statuspal.eu/api/v2"
     assert cfg.status_page_subdomain == "exoscalestatus"
     assert cfg.statuspal_api_key == "test-key"
     assert cfg.app_name == "Exoscale"
@@ -80,7 +80,8 @@ def test_defaults_when_optional_missing(tmp_path, monkeypatch):
     assert cfg.rate_limit_per_minute == 120
 
 
-def test_api_key_required(valid_config_toml, monkeypatch):
+def test_api_key_is_optional(valid_config_toml, monkeypatch):
+    # The StatusPal API v2 is public: loading must succeed without the env var.
     monkeypatch.delenv("STATUSPAL_API_KEY", raising=False)
-    with pytest.raises(ConfigurationError):
-        load_config(valid_config_toml)
+    cfg = load_config(valid_config_toml)
+    assert cfg.statuspal_api_key == ""

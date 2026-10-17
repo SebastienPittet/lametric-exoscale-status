@@ -1,7 +1,8 @@
 """Configuration loading for the LAMETRIC Exoscale status API.
 
-The StatusPal API key is read exclusively from the STATUSPAL_API_KEY
-environment variable and must never be stored in the configuration file.
+The StatusPal API v2 is public: no API key is required. When the optional
+STATUSPAL_API_KEY environment variable is set, the key is sent to StatusPal
+as a Bearer token; it must never be stored in the configuration file.
 """
 from __future__ import annotations
 
@@ -69,8 +70,10 @@ def _normalize_icons(raw: dict) -> dict[str, str]:
 def load_config(path: str | Path | None = None) -> AppConfig:
     """Load the application configuration from a TOML file.
 
-    Raises ConfigurationError when the file is missing, invalid, or when a
-    required value (including the STATUSPAL_API_KEY env var) is absent.
+    Raises ConfigurationError when the file is missing or invalid, or when
+    a required value (base_url, subdomain, app name/logo, icons) is absent.
+    The StatusPal API key is optional: it defaults to "" when the
+    STATUSPAL_API_KEY environment variable is not set.
     """
     config_path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
     try:
@@ -97,11 +100,8 @@ def load_config(path: str | Path | None = None) -> AppConfig:
 
     status_icons = _normalize_icons(raw.get("status-logo") or {})
 
+    # The public API v2 works without a key; only use it when configured.
     api_key = os.environ.get(API_KEY_ENV_VAR, "").strip()
-    if not api_key:
-        raise ConfigurationError(
-            f"{API_KEY_ENV_VAR} environment variable is required"
-        )
 
     return AppConfig(
         statuspal_base_url=str(base_url).rstrip("/"),

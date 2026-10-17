@@ -1,9 +1,10 @@
 # Static configuration for lametric-exoscale-status.
-# NOTE: the StatusPal API key is NEVER stored here; it is read exclusively
-# from the STATUSPAL_API_KEY environment variable.
+# The StatusPal API v2 is public (open data): no API key is required.
+# If the optional STATUSPAL_API_KEY environment variable is set, the key is
+# sent as a Bearer token. The key is NEVER stored in this file.
 
 [statuspal]
-base_url = "https://next.statuspal.io/api/v1"
+base_url = "https://statuspal.eu/api/v2"
 status_page_subdomain = "exoscalestatus"
 request_timeout_seconds = 10
 

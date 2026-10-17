@@ -1,17 +1,14 @@
 """Tests for app routes (TDD)."""
 import dataclasses
-import os
 from datetime import datetime, timezone
 
 import pytest
 
-os.environ.setdefault("STATUSPAL_API_KEY", "test-key")
-
-from app import create_app  # noqa: E402
-from lib.configuration import load_config  # noqa: E402
-from lib.models import StatusData  # noqa: E402
-from lib.statuspal_client import StatusPalError  # noqa: E402
-from lib.statuspal_parser import (  # noqa: E402
+from app import create_app
+from lib.configuration import load_config
+from lib.models import StatusData
+from lib.statuspal_client import StatusPalError
+from lib.statuspal_parser import (
     parse_notices,
     parse_status_page,
     parse_services,
@@ -30,12 +27,12 @@ class FakeClient:
 
 
 @pytest.fixture()
-def data(status_page_payload, services_payload, containers_payload, notices_payload):
-    incidents, maintenances = parse_notices(notices_payload)
+def data(summary_payload):
+    incidents, maintenances = parse_notices(summary_payload)
     return StatusData(
-        page_status=parse_status_page(status_page_payload),
-        services=parse_services(services_payload),
-        zones=parse_zones(containers_payload),
+        page_status=parse_status_page(summary_payload),
+        services=parse_services(summary_payload),
+        zones=parse_zones(summary_payload),
         incidents=tuple(incidents),
         maintenances=tuple(maintenances),
         fetched_at=datetime.now(timezone.utc),
@@ -105,7 +102,7 @@ def test_zones_endpoint(make_app):
 
 def test_services_endpoint(make_app):
     body = make_app().get("/api/v1/services").get_json()
-    assert len(body["services"]) == 7
+    assert len(body["services"]) == 4
 
 
 def test_incidents_endpoint(make_app):

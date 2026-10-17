@@ -30,15 +30,15 @@ class FakeSession:
 
     def get(self, url, **kwargs):
         self.calls.append((url, kwargs))
-        key = url.split("/api/v1/")[-1]
+        key = url.split("/api/v2/")[-1]
         if len(self.calls) <= self.fail_first:
             raise requests.ConnectionError("boom")
-        return self.responses.get(key, FakeResponse({"data": []}))
+        return self.responses.get(key, FakeResponse({"services": []}))
 
 
 def make_config(**overrides):
     base = dict(
-        statuspal_base_url="https://next.statuspal.io/api/v1",
+        statuspal_base_url="https://statuspal.eu/api/v2",
         status_page_subdomain="exoscalestatus",
         statuspal_api_key="secret",
         request_timeout_seconds=1.0,
@@ -53,28 +53,25 @@ def make_config(**overrides):
     return AppConfig(**base)
 
 
-def make_session(page, services, containers, notices):
+def make_session(summary):
     return FakeSession({
-        "status_pages/exoscalestatus": FakeResponse(page),
-        "status_pages/exoscalestatus/services": FakeResponse(services),
-        "status_pages/exoscalestatus/containers": FakeResponse(containers),
-        "status_pages/exoscalestatus/notices": FakeResponse(notices),
+        "status_pages/exoscalestatus/summary": FakeResponse(summary),
     })
 
 
-def test_fetch_success_sends_auth_and_parses(
-        status_page_payload, services_payload, containers_payload, notices_payload):
-    session = make_session(status_page_payload, services_payload,
-                           containers_payload, notices_payload)
+def test_fetch_success_sends_auth_and_parses(summary_payload):
+    session = make_session(summary_payload)
     client = StatusPalClient(make_config(), session=session)
     data = client.fetch_status_data()
-    assert len(session.calls) == 4
+    # a single public v2 summary request
+    assert len(session.calls) == 1
+    assert session.calls[0][0].endswith("/status_pages/exoscalestatus/summary")
     headers = session.calls[0][1]["headers"]
     assert headers["Authorization"] == "Bearer secret"
     assert "lametric-exoscale-status" in headers["User-Agent"]
     assert session.calls[0][1]["timeout"] == 1.0
     assert data.page_status == "degraded"
-    assert len(data.services) == 7
+    assert len(data.services) == 4
     assert len(data.zones) == 3
     assert len(data.incidents) == 1
     assert len(data.maintenances) == 2
@@ -82,39 +79,41 @@ def test_fetch_success_sends_auth_and_parses(
     assert data.errors == ()
 
 
-def test_http_error_raises(status_page_payload, services_payload,
-                           containers_payload, notices_payload):
-    session = make_session(status_page_payload, services_payload,
-                           containers_payload, notices_payload)
-    session.responses["status_pages/exoscalestatus"] = FakeResponse(status_code=500)
+def test_fetch_without_key_omits_authorization_header(summary_payload):
+    session = make_session(summary_payload)
+    client = StatusPalClient(make_config(statuspal_api_key=""), session=session)
+    data = client.fetch_status_data()
+    headers = session.calls[0][1]["headers"]
+    assert "Authorization" not in headers
+    assert "lametric-exoscale-status" in headers["User-Agent"]
+    assert data.page_status == "degraded"
+
+
+def test_http_error_raises(summary_payload):
+    session = make_session(summary_payload)
+    session.responses["status_pages/exoscalestatus/summary"] = FakeResponse(status_code=500)
     with pytest.raises(StatusPalError):
         StatusPalClient(make_config(), session=session).fetch_status_data()
 
 
-def test_retries_then_succeeds(status_page_payload, services_payload,
-                               containers_payload, notices_payload):
-    session = make_session(status_page_payload, services_payload,
-                           containers_payload, notices_payload)
+def test_retries_then_succeeds(summary_payload):
+    session = make_session(summary_payload)
     session.fail_first = 1  # first call raises ConnectionError
     client = StatusPalClient(make_config(), session=session)
     data = client.fetch_status_data()
     assert data.page_status == "degraded"
-    assert len(session.calls) == 5  # 4 + 1 retry
+    assert len(session.calls) == 2  # 1 + 1 retry
 
 
-def test_bad_json_raises(status_page_payload, services_payload,
-                         containers_payload, notices_payload):
-    session = make_session(status_page_payload, services_payload,
-                           containers_payload, notices_payload)
-    session.responses["status_pages/exoscalestatus/services"] = FakeResponse(json_error=True)
+def test_bad_json_raises(summary_payload):
+    session = make_session(summary_payload)
+    session.responses["status_pages/exoscalestatus/summary"] = FakeResponse(json_error=True)
     with pytest.raises(StatusPalError):
         StatusPalClient(make_config(), session=session).fetch_status_data()
 
 
-def test_persistent_timeout_raises(status_page_payload, services_payload,
-                                   containers_payload, notices_payload):
-    session = make_session(status_page_payload, services_payload,
-                           containers_payload, notices_payload)
+def test_persistent_timeout_raises(summary_payload):
+    session = make_session(summary_payload)
     session.fail_first = 99
     with pytest.raises(StatusPalError):
         StatusPalClient(make_config(), session=session, max_retries=1).fetch_status_data()

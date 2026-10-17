@@ -1,6 +1,8 @@
-"""HTTP client for the StatusPal "next" API (v1).
+"""HTTP client for the public StatusPal API (v2).
 
-The API key is sent as a Bearer token and must never be logged.
+The status page is public open data: no authentication is required.
+When an API key is configured (STATUSPAL_API_KEY environment variable),
+it is sent as a Bearer token; it must never be logged.
 """
 from __future__ import annotations
 
@@ -23,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 USER_AGENT = "lametric-exoscale-status/2.0"
 _BACKOFF_BASE_SECONDS = 0.1
-NOTICES_PER_PAGE = 100
 
 
 class StatusPalError(Exception):
@@ -31,7 +32,7 @@ class StatusPalError(Exception):
 
 
 class StatusPalClient:
-    """Fetch the Exoscale status page from the StatusPal API."""
+    """Fetch the Exoscale status page from the public StatusPal API (v2)."""
 
     def __init__(
         self,
@@ -44,10 +45,16 @@ class StatusPalClient:
         self._max_retries = max_retries
 
     def _headers(self) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {self._config.statuspal_api_key}",
-            "User-Agent": USER_AGENT,
-        }
+        """Build the request headers.
+
+        The Authorization header is only added when an API key is set;
+        the public API works without it.
+        """
+        headers = {"User-Agent": USER_AGENT}
+        api_key = self._config.statuspal_api_key
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        return headers
 
     def _get(self, url: str, **kwargs) -> dict:
         """GET a JSON object payload, retrying with a short backoff.
@@ -95,24 +102,22 @@ class StatusPalClient:
         ) from last_error
 
     def fetch_status_data(self) -> StatusData:
-        """Fetch page, services, zones and notices, assembled as StatusData.
+        """Fetch the public v2 summary and assemble a StatusData snapshot.
 
-        Raises StatusPalError if any request fails after retries; partial
-        data is never returned.
+        A single request returns the page status, services, zones,
+        incidents and maintenances. Raises StatusPalError if the request
+        fails after retries; partial data is never returned.
         """
-        base = (
+        url = (
             f"{self._config.statuspal_base_url}"
-            f"/status_pages/{self._config.status_page_subdomain}"
+            f"/status_pages/{self._config.status_page_subdomain}/summary"
         )
-        page = self._get(base)
-        services = self._get(f"{base}/services")
-        containers = self._get(f"{base}/containers")
-        notices = self._get(f"{base}/notices", params={"per_page": NOTICES_PER_PAGE})
-        incidents, maintenances = parse_notices(notices)
+        payload = self._get(url)
+        incidents, maintenances = parse_notices(payload)
         return StatusData(
-            page_status=parse_status_page(page),
-            services=parse_services(services),
-            zones=parse_zones(containers),
+            page_status=parse_status_page(payload),
+            services=parse_services(payload),
+            zones=parse_zones(payload),
             incidents=tuple(incidents),
             maintenances=tuple(maintenances),
             fetched_at=datetime.now(timezone.utc),

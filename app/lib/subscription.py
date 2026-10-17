@@ -1,4 +1,21 @@
-"""Parsing of the LAMETRIC subscription query parameters (zones/services)."""
+"""Parsing of the LAMETRIC subscription query parameters (zones/services).
+
+GET /api/v1/?zones=ch-dk-2,de-fra-1&services=compute
+        │
+        ▼  app.py
+parse_subscription(request.args)          ← subscription.py
+        │
+        ▼
+Subscription(zones={'ch-dk-2','de-fra-1'}, services={'compute'})   [gelé, immutable]
+        │
+        ▼  frames.py
+build_frames(data, …, subscription)       → filter zones/services
+        │
+        ▼
+JSON {"frames":[…]} displayed by Lametric Time
+
+
+"""
 from __future__ import annotations
 
 import re

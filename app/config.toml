@@ -2,6 +2,8 @@
 # The StatusPal API v2 is public open data: no API key exists or is used.
 
 [statuspal]
+# test url: https://statuspal.eu/api/v2/status_pages/exoscalestatustesting/summary
+
 base_url = "https://statuspal.eu/api/v2"
 status_page_subdomain = "exoscalestatus"
 request_timeout_seconds = 10

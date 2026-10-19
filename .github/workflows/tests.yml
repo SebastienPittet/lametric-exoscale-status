@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "master" ]
 
+# Least privilege: the workflow only reads the repository.
+permissions:
+  contents: read
+
 # Une seule exécution a la fois par branche/commit
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

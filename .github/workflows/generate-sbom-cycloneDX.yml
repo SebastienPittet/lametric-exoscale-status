@@ -5,6 +5,10 @@ on:
     # Production branch (was "main" — never fired on this repo).
     branches: [ "master" ]
 
+# Least privilege: the workflow only reads the repository.
+permissions:
+  contents: read
+
 jobs:
   generate-sbom:
     runs-on: ubuntu-latest
